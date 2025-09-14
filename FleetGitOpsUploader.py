@@ -464,6 +464,7 @@ class FleetGitOpsUploader(Processor):
         post_install_script: str,
     ) -> dict:
         url = f"{base_url}/api/v1/fleet/software/package"
+        self.output(f"Uploading file to Fleet: {pkg_path}")
         # API rules: only one of include/exclude
         if labels_include_any and labels_exclude_any:
             raise ProcessorError("Only one of labels_include_any or labels_exclude_any may be specified.")
@@ -523,13 +524,16 @@ class FleetGitOpsUploader(Processor):
                 self.output(
                     "Package already exists in Fleet (409 Conflict). Calculating SHA-256 locally."
                 )
+                self.output(f"Calculating SHA-256 for: {pkg_path}")
                 h = hashlib.sha256()
                 with open(pkg_path, "rb") as f:
                     for chunk in iter(lambda: f.read(HASH_CHUNK_SIZE), b""):
                         h.update(chunk)
+                digest = h.hexdigest()
+                self.output(f"SHA-256: {digest}")
                 return {
                     "software_package": {
-                        "hash_sha256": h.hexdigest(),
+                        "hash_sha256": digest,
                         "version": version,
                         "title_id": None,
                         "installer_id": None,
