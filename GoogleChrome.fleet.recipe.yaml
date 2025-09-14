@@ -30,4 +30,4 @@ Process:
       team_yaml_package_path_prefix: "../lib/macos/software/"
       pr_labels: ["autopkg"]          # or ["autopkg","software-update"]
       branch_prefix: "autopkg"
-    Processor: com.github.kitzy.fleet-autopkg-recipes.FleetGitOpsUploader
+    Processor: FleetGitOpsUploader
