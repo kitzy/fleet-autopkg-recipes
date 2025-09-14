@@ -33,6 +33,10 @@ import urllib.error
 from autopkglib import Processor, ProcessorError
 
 
+# Chunk size when calculating file hashes
+HASH_CHUNK_SIZE = 8192
+
+
 class FleetGitOpsUploader(Processor):
     """Upload AutoPkg-built installer to Fleet and update GitOps YAML in a PR."""
 
@@ -521,7 +525,7 @@ class FleetGitOpsUploader(Processor):
                 )
                 h = hashlib.sha256()
                 with open(pkg_path, "rb") as f:
-                    for chunk in iter(lambda: f.read(8192), b""):
+                    for chunk in iter(lambda: f.read(HASH_CHUNK_SIZE), b""):
                         h.update(chunk)
                 return {
                     "software_package": {
