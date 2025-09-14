@@ -291,15 +291,14 @@ class FleetGitOpsUploader(Processor):
             pre_install_query,
             post_install_script,
         )
+        software_package = upload_info.get("software_package", {})
+        title_id = software_package.get("title_id")
+        installer_id = software_package.get("installer_id")
+        hash_sha256 = software_package.get("hash_sha256")
+        returned_version = software_package.get("version") or version
 
-        # If upload returned None, it means package already exists (409) - exit gracefully
-        if upload_info is None:
-            return
-
-        title_id = upload_info["software_package"].get("title_id")
-        installer_id = upload_info["software_package"].get("installer_id")
-        hash_sha256 = upload_info["software_package"].get("hash_sha256")
-        returned_version = upload_info["software_package"].get("version") or version
+        if title_id is None or installer_id is None:
+            self.output("Package already exists in Fleet; proceeding with locally computed hash.")
 
         # Prepare repo in a temp dir
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -514,9 +513,22 @@ class FleetGitOpsUploader(Processor):
                 status = resp.getcode()
         except urllib.error.HTTPError as e:
             if e.code == 409:
-                # Package already exists in Fleet - exit gracefully
-                self.output("Package already exists in Fleet (409 Conflict). Exiting gracefully.")
-                return None
+                # Package already exists in Fleet - compute hash locally and return minimal info
+                self.output(
+                    "Package already exists in Fleet (409 Conflict). Calculating SHA-256 locally."
+                )
+                h = hashlib.sha256()
+                with open(pkg_path, "rb") as f:
+                    for chunk in iter(lambda: f.read(8192), b""):
+                        h.update(chunk)
+                return {
+                    "software_package": {
+                        "hash_sha256": h.hexdigest(),
+                        "version": version,
+                        "title_id": None,
+                        "installer_id": None,
+                    }
+                }
             raise ProcessorError(f"Fleet upload failed: {e.code} {e.read().decode()}")
         if status != 200:
             raise ProcessorError(f"Fleet upload failed: {status} {resp_body.decode()}")
