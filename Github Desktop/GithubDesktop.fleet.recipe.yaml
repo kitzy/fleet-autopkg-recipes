@@ -2,7 +2,7 @@ Description: 'Builds Github Desktop.pkg using the upstream recipe, then uploads 
   Fleet and opens a GitOps PR.
 
   '
-Identifier: com.kitzy.fleet.GithubDesktop
+Identifier: com.github.kitzy.fleet.GithubDesktop
 Input:
   NAME: Github Desktop
 MinimumVersion: '2.0'
