@@ -291,6 +291,8 @@ class FleetGitOpsUploader(Processor):
             pre_install_query,
             post_install_script,
         )
+        if not upload_info:
+            raise ProcessorError("Fleet package upload failed; no data returned")
         software_package = upload_info.get("software_package", {})
         title_id = software_package.get("title_id")
         installer_id = software_package.get("installer_id")
