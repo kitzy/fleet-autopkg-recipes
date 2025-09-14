@@ -2,6 +2,12 @@
 
 Upload a freshly built installer to Fleet using the Software API, then create or update the corresponding GitOps YAML in your Fleet GitOps repo and open a pull request. This processor is designed for CI use in GitHub Actions and can also be run locally.
 
+> **⚠️ Experimental:** FleetGitOpsUploader is a work in progress and should not be used in production environments under any circumstances.
+
+## Current Limitations
+
+- Fleet's API does not yet support searching for existing packages by hash. The processor therefore cannot determine if a package has already been uploaded without attempting an upload. It currently tries the upload and exits if Fleet returns a `409` conflict. A feature request to add hash-based lookups is being tracked in [fleetdm/fleet#32965](https://github.com/fleetdm/fleet/issues/32965).
+
 ---
 
 ## Features
