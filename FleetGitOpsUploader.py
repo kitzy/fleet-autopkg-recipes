@@ -525,12 +525,22 @@ class FleetGitOpsUploader(Processor):
                     "Package already exists in Fleet (409 Conflict). Calculating SHA-256 locally."
                 )
                 self.output(f"Calculating SHA-256 for: {pkg_path}")
-                h = hashlib.sha256()
+
+
+                # Hash in chunks
+                h_chunked = hashlib.sha256()
                 with open(pkg_path, "rb") as f:
                     for chunk in iter(lambda: f.read(HASH_CHUNK_SIZE), b""):
-                        h.update(chunk)
-                digest = h.hexdigest()
-                self.output(f"SHA-256: {digest}")
+                        h_chunked.update(chunk)
+                digest_chunked = h_chunked.hexdigest()
+                self.output(f"SHA-256 (chunked): {digest_chunked}")
+
+                # Hash in one read
+                with open(pkg_path, "rb") as f:
+                    digest_single = hashlib.sha256(f.read()).hexdigest()
+                self.output(f"SHA-256 (single read): {digest_single}")
+
+                digest = digest_chunked
                 return {
                     "software_package": {
                         "hash_sha256": digest,
