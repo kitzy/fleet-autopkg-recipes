@@ -32,4 +32,4 @@ Process:
     team_yaml_package_path_prefix: ../lib/macos/software/
     team_yaml_path: teams/workstations.yml
     version: '%version%'
-  Processor: FleetGitOpsUploader
+  Processor: com.github.kitzy.fleet-autopkg-recipes.FleetGitOpsUploader
