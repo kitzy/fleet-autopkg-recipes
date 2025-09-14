@@ -526,6 +526,7 @@ class FleetGitOpsUploader(Processor):
                 )
                 self.output(f"Calculating SHA-256 for: {pkg_path}")
 
+
                 # Hash in chunks
                 h_chunked = hashlib.sha256()
                 with open(pkg_path, "rb") as f:
