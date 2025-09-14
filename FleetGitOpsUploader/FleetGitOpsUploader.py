@@ -292,6 +292,10 @@ class FleetGitOpsUploader(Processor):
             post_install_script,
         )
 
+        # If upload returned None, it means package already exists (409) - exit gracefully
+        if upload_info is None:
+            return
+
         title_id = upload_info["software_package"].get("title_id")
         installer_id = upload_info["software_package"].get("installer_id")
         hash_sha256 = upload_info["software_package"].get("hash_sha256")
@@ -510,26 +514,9 @@ class FleetGitOpsUploader(Processor):
                 status = resp.getcode()
         except urllib.error.HTTPError as e:
             if e.code == 409:
-                body = e.read() or b"{}"
-                data = json.loads(body)
-                pkg = data.get("software_package", {})
-                title_id = pkg.get("title_id")
-                installer_id = pkg.get("installer_id")
-                hash_sha256 = pkg.get("hash_sha256")
-                if not hash_sha256:
-                    sha256 = hashlib.sha256()
-                    with open(pkg_path, "rb") as f:
-                        for chunk in iter(lambda: f.read(1024 * 1024), b""):
-                            sha256.update(chunk)
-                    hash_sha256 = sha256.hexdigest()
-                return {
-                    "software_package": {
-                        "title_id": title_id,
-                        "installer_id": installer_id,
-                        "hash_sha256": hash_sha256,
-                        "version": version,
-                    }
-                }
+                # Package already exists in Fleet - exit gracefully
+                self.output("Package already exists in Fleet (409 Conflict). Exiting gracefully.")
+                return None
             raise ProcessorError(f"Fleet upload failed: {e.code} {e.read().decode()}")
         if status != 200:
             raise ProcessorError(f"Fleet upload failed: {status} {resp_body.decode()}")
