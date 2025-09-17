@@ -251,7 +251,7 @@ Notes:
 
 - If the team YAML already references the package file, the processor does not add a duplicate.
 - If the per title YAML exists, it is updated in place.
-- If there are no changes to commit, the job still pushes the branch and attempts to open a PR. If a PR already exists for the same `head` and `base`, the processor returns the existing PR URL.
+- If there are no changes to commit, the job exits cleanly without pushing a branch or creating a PR.
 - Only one of `labels_include_any` or `labels_exclude_any` may be set. The processor enforces this.
 
 ---
@@ -281,7 +281,7 @@ Notes:
   This indicates a PR already exists. The processor searches for an open PR with the same head and base and returns that URL.
 
 - **Nothing to commit**  
-  If the YAML already matches the intended state, there will be no diff. This is normal. The processor still attempts to ensure a PR exists.
+  If the YAML already matches the intended state, there will be no diff. This is normal. The processor will exit cleanly without creating a branch or PR.
 
 ---
 

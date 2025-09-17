@@ -374,9 +374,19 @@ class FleetGitOpsUploader(Processor):
             if team_yaml_modified:
                 self._git(["add", str(team_yaml_abs)], cwd=repo_dir)
 
-            # If nothing to commit, we still push branch (idempotent PRs are okay)
+            # Check if changes need to be committed
             commit_msg = f"feat(software): {software_title} {returned_version} [{software_slug}]"
-            self._git_safe_commit(commit_msg, cwd=repo_dir)
+            commit_made = self._git_safe_commit(commit_msg, cwd=repo_dir)
+
+            # Check if any changes were actually committed
+            if not commit_made:
+                self.output("No changes detected, skipping branch push and PR creation.")
+                # Set output variables to indicate no action was taken
+                self.env["fleet_title_id"] = title_id
+                self.env["fleet_installer_id"] = installer_id
+                self.env["git_branch"] = ""
+                self.env["pull_request_url"] = ""
+                return
 
             # Push
             self._git(["push", "--set-upstream", "origin", branch_name], cwd=repo_dir)
@@ -422,6 +432,8 @@ class FleetGitOpsUploader(Processor):
         status = self._git(["status", "--porcelain"], cwd=cwd)
         if status:
             self._git(["commit", "-m", message], cwd=cwd)
+            return True
+        return False
 
     @staticmethod
     def _pr_body(
