@@ -15,6 +15,7 @@ Always reference these instructions first and fallback to search or bash command
   - `autopkg version`
 - Configure AutoPkg repositories:
   - `autopkg repo-add https://github.com/autopkg/recipes.git` -- takes 30-60 seconds. NEVER CANCEL.
+  - `autopkg repo-add https://github.com/autopkg/homebysix-recipes.git` -- takes 30-60 seconds. NEVER CANCEL.
   - `autopkg repo-add https://github.com/kitzy/fleet-autopkg-recipes.git` -- takes 30-60 seconds. NEVER CANCEL.
 - Validate Python syntax:
   - `python3 -m py_compile FleetGitOpsUploader.py` -- takes < 1 second.
@@ -41,6 +42,7 @@ Always reference these instructions first and fallback to search or bash command
 - Always validate YAML syntax when modifying recipe files
 - Check Python syntax with `python3 -m py_compile FleetGitOpsUploader.py` before committing
 - Test environment variable substitution in recipes
+- **ALWAYS write recipes in YAML format, not XML** - This repository uses YAML recipes exclusively
 
 ## Validation Scenarios
 
@@ -256,3 +258,10 @@ python3 -m py_compile FleetGitOpsUploader.py
 python3 -c "import yaml; [yaml.safe_load(open(f)) for f in ['GoogleChrome.fleet.recipe.yaml', 'GithubDesktop.fleet.recipe.yaml']]"
 git status && git log --oneline -5
 ```
+
+## References
+
+- [AutoPkg Documentation](https://github.com/autopkg/autopkg/wiki) - Official AutoPkg wiki and documentation
+- [AutoPkg Source Code](https://github.com/autopkg/autopkg) - AutoPkg main repository and source code
+- Fleet GitOps YAML software docs: https://fleetdm.com/docs/configuration/yaml-files#software
+- Fleet API documentation for software management integration
