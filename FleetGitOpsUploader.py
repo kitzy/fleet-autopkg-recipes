@@ -297,14 +297,22 @@ class FleetGitOpsUploader(Processor):
         )
         if not upload_info:
             raise ProcessorError("Fleet package upload failed; no data returned")
+        
+        # Check for graceful exit case (409 Conflict)
+        if upload_info.get("package_exists"):
+            self.output("Package already exists in Fleet. Exiting gracefully without GitOps operations.")
+            # Set minimal output variables for graceful exit
+            self.env["fleet_title_id"] = None
+            self.env["fleet_installer_id"] = None  
+            self.env["git_branch"] = ""
+            self.env["pull_request_url"] = ""
+            return
+        
         software_package = upload_info.get("software_package", {})
         title_id = software_package.get("title_id")
         installer_id = software_package.get("installer_id")
         hash_sha256 = software_package.get("hash_sha256")
         returned_version = software_package.get("version") or version
-
-        if title_id is None or installer_id is None:
-            self.output("Package already exists in Fleet; proceeding with locally computed hash.")
 
         # Prepare repo in a temp dir
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -520,35 +528,11 @@ class FleetGitOpsUploader(Processor):
                 status = resp.getcode()
         except urllib.error.HTTPError as e:
             if e.code == 409:
-                # Package already exists in Fleet - compute hash locally and return minimal info
+                # Package already exists in Fleet - return special marker for graceful exit
                 self.output(
-                    "Package already exists in Fleet (409 Conflict). Calculating SHA-256 locally."
+                    "Package already exists in Fleet (409 Conflict). Exiting gracefully."
                 )
-                self.output(f"Calculating SHA-256 for: {pkg_path}")
-
-
-                # Hash in chunks
-                h_chunked = hashlib.sha256()
-                with open(pkg_path, "rb") as f:
-                    for chunk in iter(lambda: f.read(HASH_CHUNK_SIZE), b""):
-                        h_chunked.update(chunk)
-                digest_chunked = h_chunked.hexdigest()
-                self.output(f"SHA-256 (chunked): {digest_chunked}")
-
-                # Hash in one read
-                with open(pkg_path, "rb") as f:
-                    digest_single = hashlib.sha256(f.read()).hexdigest()
-                self.output(f"SHA-256 (single read): {digest_single}")
-
-                digest = digest_chunked
-                return {
-                    "software_package": {
-                        "hash_sha256": digest,
-                        "version": version,
-                        "title_id": None,
-                        "installer_id": None,
-                    }
-                }
+                return {"package_exists": True}
             raise ProcessorError(f"Fleet upload failed: {e.code} {e.read().decode()}")
         if status != 200:
             raise ProcessorError(f"Fleet upload failed: {status} {resp_body.decode()}")
