@@ -202,6 +202,7 @@ class FleetGitOpsUploader(Processor):
         "fleet_installer_id": {"description": "Installer ID in Fleet."},
         "git_branch": {"description": "The branch name created for the PR."},
         "pull_request_url": {"description": "The created PR URL."},
+        "hash_sha256": {"description": "SHA-256 hash of the uploaded package, as returned by Fleet."},
     }
 
     def _derive_github_repo(self, git_repo_url: str) -> str:
@@ -415,10 +416,13 @@ class FleetGitOpsUploader(Processor):
         )
 
         # Outputs
+
         self.env["fleet_title_id"] = title_id
         self.env["fleet_installer_id"] = installer_id
         self.env["git_branch"] = branch_name
         self.env["pull_request_url"] = pr_url
+        if hash_sha256:
+            self.env["hash_sha256"] = hash_sha256
 
         self.output(f"PR opened: {pr_url}")
 

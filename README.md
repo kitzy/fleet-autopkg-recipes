@@ -98,6 +98,7 @@ All inputs can be provided as AutoPkg variables in your recipe or via `-k` overr
 | `fleet_installer_id` | Fleet installer ID returned by the upload API. |
 | `git_branch` | Created branch name. |
 | `pull_request_url` | URL of the created or found pull request. |
+| `hash_sha256` | SHA-256 hash of the uploaded package, as returned by Fleet. |
 
 ---
 
