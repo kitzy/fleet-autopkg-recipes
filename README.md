@@ -60,10 +60,14 @@ All inputs can be provided as AutoPkg variables in your recipe or via `-k` overr
 | `pkg_path` | Yes | str | Path to the built `.pkg` file. |
 | `software_title` | Yes | str | Human readable title, for example `Firefox`. |
 | `version` | Yes | str | Version string used in YAML and branch name. |
-| `platform` | No | str | Defaults to `darwin`. Accepts `darwin`, `windows`, `linux`, `ios`, `ipados`. |
 | `fleet_api_base` | Yes | str | Fleet base URL, for example `https://fleet.example.com`. |
 | `fleet_api_token` | Yes | str | Fleet API token. |
 | `team_id` | Yes | int | Fleet Team ID for the upload. |
+| `git_repo_url` | Yes | str | HTTPS URL of your Fleet GitOps repo. |
+| `team_yaml_path` | Yes | str | Path to team YAML in repo, for example `teams/workstations.yml`. |
+| `github_repo` | Yes | str | `owner/repo` for PR creation. |
+
+| `platform` | No | str | Defaults to `darwin`. Accepts `darwin`, `windows`, `linux`, `ios`, `ipados`. |
 | `self_service` | No | bool | Make available in self service. Default `false`. |
 | `automatic_install` | No | bool | On macOS, create automatic install policy. Default `false`. |
 | `labels_include_any` | No | list[str] | Labels required for targeting. Only one of include or exclude may be set. |
@@ -72,17 +76,15 @@ All inputs can be provided as AutoPkg variables in your recipe or via `-k` overr
 | `uninstall_script` | No | str | Optional uninstall script contents. |
 | `pre_install_query` | No | str | Optional osquery condition. |
 | `post_install_script` | No | str | Optional post install script contents. |
-| `git_repo_url` | Yes | str | HTTPS URL of your Fleet GitOps repo. |
 | `git_base_branch` | No | str | Base branch to branch from and open PR to. Default `main`. |
 | `git_author_name` | No | str | Commit author name. Default `autopkg-bot`. |
 | `git_author_email` | No | str | Commit author email. Default `autopkg-bot@example.com`. |
-| `team_yaml_path` | Yes | str | Path to team YAML in repo, for example `teams/workstations.yml`. |
 | `software_dir` | No | str | Directory for per title YAML. Default `lib/macos/software`. |
 | `package_yaml_suffix` | No | str | Suffix for per title YAML. Default `.package.yml`. |
 | `team_yaml_package_path_prefix` | No | str | Path prefix used inside team YAML. Default `../lib/macos/software/`. |
-| `github_repo` | Yes | str | `owner/repo` for PR creation. |
 | `github_token` | No | str | GitHub token. If empty, uses `FLEET_GITOPS_GITHUB_TOKEN` env. When set, the processor rewrites the repo URL with the token so `git clone` and `git push` authenticate without prompts. |
 | `pr_labels` | No | list[str] | Labels to set on the PR. |
+| `PR_REVIEWER` | No | str | GitHub username to assign as PR reviewer. |
 | `software_slug` | No | str | Override slug used for file and branch names. Defaults to normalized `software_title`. |
 | `branch_prefix` | No | str | Optional prefix for branch names, for example `autopkg`. |
 
