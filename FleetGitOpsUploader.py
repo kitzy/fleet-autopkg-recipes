@@ -178,6 +178,12 @@ class FleetGitOpsUploader(Processor):
             "description": "List of GitHub PR labels to apply.",
         },
 
+        "pr_reviewer": {
+            "required": False,
+            "default": "",
+            "description": "GitHub username to assign as PR reviewer.",
+        },
+
         # Slug / naming
         "software_slug": {
             "required": False,
@@ -272,7 +278,9 @@ class FleetGitOpsUploader(Processor):
                 "GitHub token not provided (github_token or FLEET_GITOPS_GITHUB_TOKEN env)."
             )
         pr_labels = list(self.env.get("pr_labels", []))
+
         branch_prefix = self.env.get("branch_prefix", "").strip()
+        pr_reviewer = self.env.get("pr_reviewer", "").strip()
 
         # Slug
         software_slug = self.env.get("software_slug", "").strip() or self._slugify(software_title)
@@ -392,6 +400,7 @@ class FleetGitOpsUploader(Processor):
             self._git(["push", "--set-upstream", "origin", branch_name], cwd=repo_dir)
 
         # Open PR
+
         pr_url = self._open_pull_request(
             github_repo=github_repo,
             github_token=github_token,
@@ -400,6 +409,7 @@ class FleetGitOpsUploader(Processor):
             title=f"{software_title} {returned_version}",
             body=self._pr_body(software_title, returned_version, software_slug, title_id, installer_id),
             labels=pr_labels,
+            reviewer=pr_reviewer,
         )
 
         # Outputs
@@ -653,6 +663,7 @@ class FleetGitOpsUploader(Processor):
         title: str,
         body: str,
         labels: list[str],
+        reviewer: str = "",
     ) -> str:
         api = f"https://api.github.com/repos/{github_repo}/pulls"
         headers = {
@@ -686,6 +697,16 @@ class FleetGitOpsUploader(Processor):
             issue_req = urllib.request.Request(issue_api, data=issue_data, headers=headers, method="POST")
             try:
                 urllib.request.urlopen(issue_req, timeout=30)
+            except urllib.error.HTTPError:
+                pass
+
+        # Assign reviewer if provided
+        if reviewer and pr_url and "number" in pr:
+            reviewers_api = f"https://api.github.com/repos/{github_repo}/pulls/{pr['number']}/requested_reviewers"
+            reviewers_data = json.dumps({"reviewers": [reviewer]}).encode()
+            reviewers_req = urllib.request.Request(reviewers_api, data=reviewers_data, headers=headers, method="POST")
+            try:
+                urllib.request.urlopen(reviewers_req, timeout=30)
             except urllib.error.HTTPError:
                 pass
 
