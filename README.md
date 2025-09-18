@@ -53,6 +53,7 @@ Upload a freshly built installer to Fleet using the Software API, then create or
 
 ## Inputs
 
+
 All inputs can be provided as AutoPkg variables in your recipe or via `-k` overrides.
 
 | Name | Required | Type | Description |
@@ -66,7 +67,6 @@ All inputs can be provided as AutoPkg variables in your recipe or via `-k` overr
 | `git_repo_url` | Yes | str | HTTPS URL of your Fleet GitOps repo. |
 | `team_yaml_path` | Yes | str | Path to team YAML in repo, for example `teams/workstations.yml`. |
 | `github_repo` | Yes | str | `owner/repo` for PR creation. |
-
 | `platform` | No | str | Defaults to `darwin`. Accepts `darwin`, `windows`, `linux`, `ios`, `ipados`. |
 | `self_service` | No | bool | Make available in self service. Default `false`. |
 | `automatic_install` | No | bool | On macOS, create automatic install policy. Default `false`. |
