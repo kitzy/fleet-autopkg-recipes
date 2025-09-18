@@ -178,7 +178,7 @@ class FleetGitOpsUploader(Processor):
             "description": "List of GitHub PR labels to apply.",
         },
 
-        "pr_reviewer": {
+        "PR_REVIEWER": {
             "required": False,
             "default": "",
             "description": "GitHub username to assign as PR reviewer.",
@@ -279,8 +279,10 @@ class FleetGitOpsUploader(Processor):
             )
         pr_labels = list(self.env.get("pr_labels", []))
 
+
         branch_prefix = self.env.get("branch_prefix", "").strip()
-        pr_reviewer = self.env.get("pr_reviewer", "").strip()
+        pr_reviewer = self.env.get("PR_REVIEWER", "") or os.environ.get("PR_REVIEWER", "")
+        pr_reviewer = pr_reviewer.strip()
 
         # Slug
         software_slug = self.env.get("software_slug", "").strip() or self._slugify(software_title)
