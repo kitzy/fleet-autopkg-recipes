@@ -1,40 +1,40 @@
-Description: 'Builds ChefDK.pkg and uploads to Fleet'
-Identifier: com.github.kitzy.fleet.ChefDK
+Description: 'Builds Caffeine.pkg and uploads to Fleet'
+Identifier: com.github.kitzy.fleet.Caffeine
 Input:
-  NAME: ChefDK
+  NAME: Caffeine
 MinimumVersion: '2.0'
-ParentRecipe: com.github.kitzy.pkg.ChefDK
+ParentRecipe: com.github.homebysix.pkg.Caffeine
 Process:
 - Arguments:
     # Core package info (from parent recipe)
     pkg_path: "%pkg_path%"
     software_title: "%NAME%"
     version: "%version%"
-
+    
     # Fleet API configuration
     fleet_api_base: "%FLEET_API_BASE%"
     fleet_api_token: "%FLEET_API_TOKEN%"
     team_id: "%FLEET_TEAM_ID%"
-
+    
     # Software configuration
     platform: "%FLEET_PLATFORM%"
     software_slug: "%FLEET_SOFTWARE_SLUG%"
     automatic_install: "%FLEET_AUTOMATIC_INSTALL%"
     self_service: "%FLEET_SELF_SERVICE%"
-
+    
     # Git/GitHub configuration
     git_repo_url: "%FLEET_GITOPS_REPO_URL%"
     github_token: "%FLEET_GITOPS_GITHUB_TOKEN%"
     git_base_branch: "%FLEET_GIT_BASE_BRANCH%"
     git_author_name: "%FLEET_GIT_AUTHOR_NAME%"
     git_author_email: "%FLEET_GITOPS_AUTHOR_EMAIL%"
-
+    
     # GitOps file paths
     team_yaml_path: "%FLEET_TEAM_YAML_PATH%"
     software_dir: "%FLEET_SOFTWARE_DIR%"
     package_yaml_suffix: "%FLEET_PACKAGE_YAML_SUFFIX%"
     team_yaml_package_path_prefix: "%FLEET_TEAM_YAML_PACKAGE_PATH_PREFIX%"
-
+    
     # Optional features
     branch_prefix: "%FLEET_BRANCH_PREFIX%"
     pr_labels: "%FLEET_PR_LABELS%"

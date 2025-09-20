@@ -1,0 +1,7 @@
+Description: Stub recipe for the FleetGitOpsUploader shared processor.
+Identifier: com.github.kitzy.sharedprocessor.FleetGitOpsUploader
+MinimumVersion: '2.0'
+Input:
+  NAME: FleetGitOpsUploader
+Process:
+- Processor: FleetGitOpsUploader
