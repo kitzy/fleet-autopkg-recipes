@@ -28,7 +28,7 @@ Upload a freshly built installer to Fleet using the Software API, then create or
 - `requests` and `PyYAML` Python packages
 - `git` CLI on PATH
 - GitHub token with `repo` scope if pushing to a different repo or if you need elevated permissions
-- Fleet server and API token with rights to upload software for the target team
+- Fleet server v4.70.0 or higher and API token with rights to upload software for the target team
 
 ---
 
@@ -99,6 +99,23 @@ All inputs can be provided as AutoPkg variables in your recipe or via `-k` overr
 
 ---
 
+## Fleet v4.73.0 Breaking Changes
+
+Fleet v4.73.0 introduces breaking changes to the software YAML format. The processor automatically detects the Fleet server version via the `/api/v1/fleet/version` endpoint and adapts the YAML format accordingly:
+
+**Fleet < 4.73.0 (Old Format):**
+- `self_service`, `labels_include_any`, `labels_exclude_any` are stored in individual package YAML files
+- Compatible with existing Fleet deployments
+
+**Fleet >= 4.73.0 (New Format):**
+- `self_service`, `labels_include_any`, `labels_exclude_any` are moved to team YAML software section
+- Package YAML files contain only core metadata (name, version, platform, hash, scripts)
+- Automatically detected and applied when connecting to Fleet v4.73.0+ servers
+
+**Note:** If the version query fails, the processor defaults to the new format for modern Fleet deployments.
+
+---
+
 ## Outputs
 
 | Name | Description |
@@ -117,39 +134,60 @@ All inputs can be provided as AutoPkg variables in your recipe or via `-k` overr
 
 Created or updated at `<repo>/<software_dir>/<software_slug><package_yaml_suffix>`, for example `lib/macos/software/firefox.package.yml`.
 
-Structure:
+**Fleet < 4.73.0 Structure:**
 
 ```yaml
-package:
-  name: "Firefox"
-  version: "129.0.2"
-  platform: "darwin"
-  hash_sha256: "abc123..."         # if provided by Fleet response
-  self_service: true               # optional
-  automatic_install: false         # optional macOS only
-  labels_include_any:              # optional, only one of include or exclude
-    - "Workstations"
-  pre_install_query:               # optional
-    query: "SELECT 1;"
-  install_script:                  # optional
-    contents: |
-      #!/bin/bash
-      echo "custom install"
-  uninstall_script:                # optional
-    contents: |
-      #!/bin/bash
-      echo "custom uninstall"
-  post_install_script:             # optional
-    contents: |
-      #!/bin/bash
-      echo "post"
+name: "Firefox"
+version: "129.0.2"
+platform: "darwin"
+hash_sha256: "abc123..."         # if provided by Fleet response
+self_service: true               # targeting - in package file
+automatic_install: false        # optional macOS only
+labels_include_any:              # targeting - in package file
+  - "Workstations"
+pre_install_query:               # optional
+  query: "SELECT 1;"
+install_script:                  # optional
+  contents: |
+    #!/bin/bash
+    echo "custom install"
+uninstall_script:                # optional
+  contents: |
+    #!/bin/bash
+    echo "custom uninstall"
+post_install_script:             # optional
+  contents: |
+    #!/bin/bash
+    echo "post"
 ```
 
-This file represents a custom package uploaded to Fleet. The GitOps runner applies targeting and behavior from this file.
+**Fleet >= 4.73.0 Structure:**
+
+```yaml
+name: "Firefox"
+version: "129.0.2"
+platform: "darwin"
+hash_sha256: "abc123..."         # if provided by Fleet response
+automatic_install: false        # optional macOS only
+pre_install_query:               # optional
+  query: "SELECT 1;"
+install_script:                  # optional
+  contents: |
+    #!/bin/bash
+    echo "custom install"
+uninstall_script:                # optional
+  contents: |
+    #!/bin/bash
+    echo "custom uninstall"
+post_install_script:             # optional
+  contents: |
+    #!/bin/bash
+    echo "post"
+```
 
 ### Team YAML update
 
-Ensures the team YAML includes a reference under `software.packages`. For example in `teams/workstations.yml`:
+**Fleet < 4.73.0:** Simple package reference in `teams/workstations.yml`:
 
 ```yaml
 software:
@@ -157,7 +195,16 @@ software:
     - path: ../lib/macos/software/firefox.package.yml
 ```
 
-If the entry already exists, it does not duplicate it.
+**Fleet >= 4.73.0:** Package reference with targeting metadata in `teams/workstations.yml`:
+
+```yaml
+software:
+  packages:
+    - path: ../lib/macos/software/firefox.package.yml
+      self_service: true
+      labels_include_any:
+        - "Workstations"
+```
 
 ---
 
