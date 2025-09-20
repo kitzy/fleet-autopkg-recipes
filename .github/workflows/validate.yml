@@ -31,17 +31,17 @@ jobs:
         
     - name: Validate Python syntax
       run: |
-        python -m py_compile processors/FleetGitOpsUploader.py
+        python -m py_compile FleetGitOpsUploader/FleetGitOpsUploader.py
         echo "✅ Python syntax validation passed"
         
     - name: Check code formatting with black
       run: |
-        black --check --diff processors/FleetGitOpsUploader.py
+        black --check --diff FleetGitOpsUploader/FleetGitOpsUploader.py
         echo "✅ Code formatting check passed"
         
     - name: Check import sorting with isort
       run: |
-        isort --check-only --diff processors/FleetGitOpsUploader.py
+        isort --check-only --diff FleetGitOpsUploader/FleetGitOpsUploader.py
         echo "✅ Import sorting check passed"
         
     - name: Run pylint
@@ -50,7 +50,7 @@ jobs:
         pip install types-requests types-PyYAML
         # Run pylint with reasonable settings for AutoPkg processor
         set +e  # Don't exit on pylint warnings/errors
-        pylint --disable=import-error,missing-module-docstring,missing-class-docstring,missing-function-docstring,too-few-public-methods,too-many-instance-attributes,too-many-arguments,too-many-locals,too-many-branches,too-many-statements,line-too-long,invalid-name,too-many-return-statements,subprocess-run-check,no-else-return,unused-variable,too-many-positional-arguments,unused-argument,singleton-comparison,consider-using-with,unused-import,raise-missing-from processors/FleetGitOpsUploader.py
+        pylint --disable=import-error,missing-module-docstring,missing-class-docstring,missing-function-docstring,too-few-public-methods,too-many-instance-attributes,too-many-arguments,too-many-locals,too-many-branches,too-many-statements,line-too-long,invalid-name,too-many-return-statements,subprocess-run-check,no-else-return,unused-variable,too-many-positional-arguments,unused-argument,singleton-comparison,consider-using-with,unused-import,raise-missing-from FleetGitOpsUploader/FleetGitOpsUploader.py
         pylint_exit_code=$?
         set -e  # Re-enable exit on error
         echo "Pylint completed with exit code: $pylint_exit_code"
@@ -62,8 +62,8 @@ jobs:
         import sys
         import os
         
-        # Add processors directory to Python path
-        sys.path.insert(0, 'processors')
+        # Add FleetGitOpsUploader directory to Python path
+        sys.path.insert(0, 'FleetGitOpsUploader')
         
         # Test that all required modules can be imported
         modules_to_test = ['requests', 'yaml', 'json', 'urllib.parse', 'datetime', 'pathlib']
@@ -126,7 +126,7 @@ jobs:
                 # Check that Process contains FleetGitOpsUploader
                 process_list = data.get('Process', [])
                 has_processor = any(
-                    item.get('Processor') == 'FleetGitOpsUploader' 
+                    item.get('Processor') in ['FleetGitOpsUploader', 'com.github.kitzy.FleetGitOpsUploader/FleetGitOpsUploader']
                     for item in process_list 
                     if isinstance(item, dict)
                 )
@@ -380,8 +380,8 @@ jobs:
         import sys
         import os
         
-        # Add processors directory to Python path for import testing
-        sys.path.insert(0, 'processors')
+        # Add FleetGitOpsUploader directory to Python path for import testing
+        sys.path.insert(0, 'FleetGitOpsUploader')
         
         # Test that the processor can be imported without AutoPkg
         print('Testing FleetGitOpsUploader import...')
