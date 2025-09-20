@@ -313,10 +313,16 @@ jobs:
       run: |
         echo "=== Security Check ==="
         
-        # Check for hardcoded secrets or tokens
+        # Check for hardcoded secrets or tokens (actual token values, not variable assignments)
         echo "Checking for hardcoded secrets..."
-        if grep -r -i "token.*=" *.yaml *.py | grep -v "%.*%" | grep -v "your-" | grep -v "example" | grep -v "fleet_api_token.*required" | grep -v "github_token.*required"; then
+        if grep -r -E "(token|password|secret|key)\s*=\s*['\"][a-zA-Z0-9_-]{10,}" *.yaml *.py | grep -v "%.*%" | grep -v "your-" | grep -v "example"; then
           echo "❌ Potential hardcoded tokens found"
+          exit 1
+        fi
+        
+        # Check for hardcoded API tokens that look like real tokens
+        if grep -r -E "(ghp_|sk_|pk_|xoxb-)[a-zA-Z0-9_-]{20,}" *.yaml *.py; then
+          echo "❌ Real API tokens found in code"
           exit 1
         fi
         
