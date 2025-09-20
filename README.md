@@ -32,6 +32,15 @@ Upload a freshly built installer to Fleet using the Software API, then create or
 
 ---
 
+
+## Why YAML?
+
+AutoPkg [supports both XML (plist) and YAML recipe formats](https://github.com/autopkg/autopkg/wiki/Recipe-Format#overview). I personally find YAML more readable and maintainable than XML, especially for recipes that may be edited by hand or reviewed in code. YAML's indentation and lack of angle brackets make it easier to scan and less error-prone for most users.
+
+Additionally, Fleet's GitOps workflow is driven by YAML files for software configuration and team assignments. By using YAML for both AutoPkg recipes and Fleet GitOps files, this repository maintains consistency and makes it easier to reason about the entire workflow. Aligning with Fleet's format also reduces friction when integrating new tools or automations.
+
+---
+
 ## Installation
 
 1. Place `FleetGitOpsUploader.py` in an AutoPkg processor repo, for example:
