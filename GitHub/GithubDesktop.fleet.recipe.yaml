@@ -42,4 +42,4 @@ Process:
     branch_prefix: "%FLEET_BRANCH_PREFIX%"
     pr_labels: "%FLEET_PR_LABELS%"
     PR_REVIEWER: "%PR_REVIEWER%"
-  Processor: FleetGitOpsUploader
+  Processor: com.github.kitzy.FleetGitOpsUploader/FleetGitOpsUploader

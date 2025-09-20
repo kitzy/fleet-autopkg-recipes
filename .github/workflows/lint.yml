@@ -25,12 +25,12 @@ jobs:
     - name: Check Python formatting
       run: |
         echo "Checking Python code formatting..."
-        black --check --diff processors/FleetGitOpsUploader.py
+        black --check --diff FleetGitOpsUploader/FleetGitOpsUploader.py
         
     - name: Check import sorting
       run: |
         echo "Checking import order..."
-        isort --check-only --diff processors/FleetGitOpsUploader.py
+        isort --check-only --diff FleetGitOpsUploader/FleetGitOpsUploader.py
         
     - name: Run flake8
       run: |
