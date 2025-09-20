@@ -10,14 +10,14 @@
 
 from __future__ import annotations
 
-import os
-import re
-import json
-import shutil
 import hashlib
 import io
-import tempfile
+import json
+import os
+import re
+import shutil
 import subprocess
+import tempfile
 from datetime import datetime
 from pathlib import Path
 
@@ -26,12 +26,11 @@ try:
 except ImportError:
     raise ImportError("PyYAML is required. Install with: pip install PyYAML")
 
-import urllib.request
-import urllib.parse
 import urllib.error
+import urllib.parse
+import urllib.request
 
 from autopkglib import Processor, ProcessorError
-
 
 # Chunk size when calculating file hashes
 HASH_CHUNK_SIZE = 8192
@@ -60,7 +59,6 @@ class FleetGitOpsUploader(Processor):
             "default": "darwin",
             "description": "Platform hint for YAML (darwin|windows|linux|ios|ipados).",
         },
-
         # --- Fleet API ---
         "fleet_api_base": {
             "required": True,
@@ -74,7 +72,6 @@ class FleetGitOpsUploader(Processor):
             "required": True,
             "description": "Fleet team ID to attach the uploaded package to.",
         },
-
         # Optional Fleet install flags
         "self_service": {
             "required": False,
@@ -116,7 +113,6 @@ class FleetGitOpsUploader(Processor):
             "default": "",
             "description": "Post-install script body (string).",
         },
-
         # --- Git / GitHub ---
         "git_repo_url": {
             "required": True,
@@ -137,7 +133,6 @@ class FleetGitOpsUploader(Processor):
             "default": "autopkg-bot@example.com",
             "description": "Commit author email.",
         },
-
         # Pathing inside repo
         "team_yaml_path": {
             "required": True,
@@ -158,7 +153,6 @@ class FleetGitOpsUploader(Processor):
             "default": "../lib/macos/software/",
             "description": "Prefix used in team YAML when referencing package YAML paths.",
         },
-
         # GitHub PR
         "github_repo": {
             "required": False,
@@ -177,13 +171,11 @@ class FleetGitOpsUploader(Processor):
             "default": ["autopkg"],
             "description": "List of GitHub PR labels to apply.",
         },
-
         "PR_REVIEWER": {
             "required": False,
             "default": "",
             "description": "GitHub username to assign as PR reviewer.",
         },
-
         # Slug / naming
         "software_slug": {
             "required": False,
@@ -202,7 +194,9 @@ class FleetGitOpsUploader(Processor):
         "fleet_installer_id": {"description": "Installer ID in Fleet."},
         "git_branch": {"description": "The branch name created for the PR."},
         "pull_request_url": {"description": "The created PR URL."},
-        "hash_sha256": {"description": "SHA-256 hash of the uploaded package, as returned by Fleet."},
+        "hash_sha256": {
+            "description": "SHA-256 hash of the uploaded package, as returned by Fleet."
+        },
     }
 
     def _derive_github_repo(self, git_repo_url: str) -> str:
@@ -269,24 +263,35 @@ class FleetGitOpsUploader(Processor):
         team_yaml_path = self.env["team_yaml_path"]
         software_dir = self.env.get("software_dir", "lib/macos/software")
         package_yaml_suffix = self.env.get("package_yaml_suffix", ".package.yml")
-        team_yaml_prefix = self.env.get("team_yaml_package_path_prefix", "../lib/macos/software/")
-        github_repo = self.env.get("github_repo") or self._derive_github_repo(git_repo_url)
+        team_yaml_prefix = self.env.get(
+            "team_yaml_package_path_prefix", "../lib/macos/software/"
+        )
+        github_repo = self.env.get("github_repo") or self._derive_github_repo(
+            git_repo_url
+        )
         if not github_repo:
-            raise ProcessorError("github_repo not provided and could not derive from git_repo_url")
-        github_token = self.env.get("github_token") or os.environ.get("FLEET_GITOPS_GITHUB_TOKEN", "")
+            raise ProcessorError(
+                "github_repo not provided and could not derive from git_repo_url"
+            )
+        github_token = self.env.get("github_token") or os.environ.get(
+            "FLEET_GITOPS_GITHUB_TOKEN", ""
+        )
         if not github_token:
             raise ProcessorError(
                 "GitHub token not provided (github_token or FLEET_GITOPS_GITHUB_TOKEN env)."
             )
         pr_labels = list(self.env.get("pr_labels", []))
 
-
         branch_prefix = self.env.get("branch_prefix", "").strip()
-        pr_reviewer = self.env.get("PR_REVIEWER", "") or os.environ.get("PR_REVIEWER", "")
+        pr_reviewer = self.env.get("PR_REVIEWER", "") or os.environ.get(
+            "PR_REVIEWER", ""
+        )
         pr_reviewer = pr_reviewer.strip()
 
         # Slug
-        software_slug = self.env.get("software_slug", "").strip() or self._slugify(software_title)
+        software_slug = self.env.get("software_slug", "").strip() or self._slugify(
+            software_title
+        )
 
         # Query Fleet API to get server version for format detection
         self.output("Querying Fleet server version...")
@@ -321,17 +326,19 @@ class FleetGitOpsUploader(Processor):
         )
         if not upload_info:
             raise ProcessorError("Fleet package upload failed; no data returned")
-        
+
         # Check for graceful exit case (409 Conflict)
         if upload_info.get("package_exists"):
-            self.output("Package already exists in Fleet. Exiting gracefully without GitOps operations.")
+            self.output(
+                "Package already exists in Fleet. Exiting gracefully without GitOps operations."
+            )
             # Set minimal output variables for graceful exit
             self.env["fleet_title_id"] = None
-            self.env["fleet_installer_id"] = None  
+            self.env["fleet_installer_id"] = None
             self.env["git_branch"] = ""
             self.env["pull_request_url"] = ""
             return
-        
+
         software_package = upload_info.get("software_package", {})
         title_id = software_package.get("title_id")
         installer_id = software_package.get("installer_id")
@@ -345,9 +352,21 @@ class FleetGitOpsUploader(Processor):
             if github_token and git_repo_url.startswith("https://"):
                 parsed = urllib.parse.urlparse(git_repo_url)
                 if "@" not in parsed.netloc:
-                    netloc = f"{urllib.parse.quote(github_token, safe='')}@{parsed.netloc}"
+                    netloc = (
+                        f"{urllib.parse.quote(github_token, safe='')}@{parsed.netloc}"
+                    )
                     clone_url = urllib.parse.urlunparse(parsed._replace(netloc=netloc))
-            self._git(["clone", "--origin", "origin", "--branch", git_base_branch, clone_url, str(repo_dir)])
+            self._git(
+                [
+                    "clone",
+                    "--origin",
+                    "origin",
+                    "--branch",
+                    git_base_branch,
+                    clone_url,
+                    str(repo_dir),
+                ]
+            )
 
             # Create branch
             branch_name = f"{software_slug}-{returned_version}"
@@ -404,12 +423,16 @@ class FleetGitOpsUploader(Processor):
                 self._git(["add", str(team_yaml_abs)], cwd=repo_dir)
 
             # Check if changes need to be committed
-            commit_msg = f"feat(software): {software_title} {returned_version} [{software_slug}]"
+            commit_msg = (
+                f"feat(software): {software_title} {returned_version} [{software_slug}]"
+            )
             commit_made = self._git_safe_commit(commit_msg, cwd=repo_dir)
 
             # Check if any changes were actually committed
             if not commit_made:
-                self.output("No changes detected, skipping branch push and PR creation.")
+                self.output(
+                    "No changes detected, skipping branch push and PR creation."
+                )
                 # Set output variables to indicate no action was taken
                 self.env["fleet_title_id"] = title_id
                 self.env["fleet_installer_id"] = installer_id
@@ -428,7 +451,9 @@ class FleetGitOpsUploader(Processor):
             head=branch_name,
             base=git_base_branch,
             title=f"{software_title} {returned_version}",
-            body=self._pr_body(software_title, returned_version, software_slug, title_id, installer_id),
+            body=self._pr_body(
+                software_title, returned_version, software_slug, title_id, installer_id
+            ),
             labels=pr_labels,
             reviewer=pr_reviewer,
         )
@@ -456,7 +481,9 @@ class FleetGitOpsUploader(Processor):
     def _git(self, args, cwd=None):
         env = os.environ.copy()
         env.setdefault("GIT_TERMINAL_PROMPT", "0")
-        proc = subprocess.run(["git"] + args, cwd=cwd, capture_output=True, text=True, env=env)
+        proc = subprocess.run(
+            ["git"] + args, cwd=cwd, capture_output=True, text=True, env=env
+        )
         if proc.returncode != 0:
             raise ProcessorError(f"git {' '.join(args)} failed: {proc.stderr.strip()}")
         return proc.stdout.strip()
@@ -477,7 +504,7 @@ class FleetGitOpsUploader(Processor):
             major = int(version_parts[0])
             minor = int(version_parts[1])
             patch = int(version_parts[2]) if len(version_parts) > 2 else 0
-            
+
             # Check if >= 4.73.0
             if major > 4:
                 return True
@@ -498,7 +525,7 @@ class FleetGitOpsUploader(Processor):
             major = int(version_parts[0])
             minor = int(version_parts[1])
             patch = int(version_parts[2]) if len(version_parts) > 2 else 0
-            
+
             # Check if >= 4.70.0
             if major > 4:
                 return True
@@ -511,7 +538,7 @@ class FleetGitOpsUploader(Processor):
 
     def _get_fleet_version(self, fleet_api_base: str, fleet_token: str) -> str:
         """Query Fleet API to get the server version.
-        
+
         Returns the semantic version string (e.g., "4.73.0").
         If the query fails, defaults to "4.73.0" (new format) assuming a modern deployment.
         """
@@ -522,7 +549,7 @@ class FleetGitOpsUploader(Processor):
                 "Accept": "application/json",
             }
             req = urllib.request.Request(url, headers=headers)
-            
+
             with urllib.request.urlopen(req, timeout=30) as resp:
                 if resp.getcode() == 200:
                     data = json.loads(resp.read().decode())
@@ -531,11 +558,16 @@ class FleetGitOpsUploader(Processor):
                         # Parse version string like "4.73.0-dev" or "4.73.0"
                         # Extract just the semantic version part
                         return version.split("-")[0]
-            
-        except (urllib.error.HTTPError, urllib.error.URLError, json.JSONDecodeError, KeyError):
+
+        except (
+            urllib.error.HTTPError,
+            urllib.error.URLError,
+            json.JSONDecodeError,
+            KeyError,
+        ):
             # If we can't get the version, assume new format for modern deployments
             pass
-        
+
         # Default to new format version if query fails (assume modern Fleet deployment)
         return "4.73.0"
 
@@ -591,14 +623,18 @@ class FleetGitOpsUploader(Processor):
         self.output(f"Uploading file to Fleet: {pkg_path}")
         # API rules: only one of include/exclude
         if labels_include_any and labels_exclude_any:
-            raise ProcessorError("Only one of labels_include_any or labels_exclude_any may be specified.")
+            raise ProcessorError(
+                "Only one of labels_include_any or labels_exclude_any may be specified."
+            )
 
         boundary = "----FleetUploadBoundary" + hashlib.sha1(os.urandom(16)).hexdigest()
         body = io.BytesIO()
 
         def write_field(name: str, value: str):
             body.write(f"--{boundary}\r\n".encode())
-            body.write(f'Content-Disposition: form-data; name="{name}"\r\n\r\n'.encode())
+            body.write(
+                f'Content-Disposition: form-data; name="{name}"\r\n\r\n'.encode()
+            )
             body.write(str(value).encode())
             body.write(b"\r\n")
 
@@ -715,7 +751,7 @@ class FleetGitOpsUploader(Processor):
                 pkg_block["labels_include_any"] = list(labels_include_any)
             if labels_exclude_any:
                 pkg_block["labels_exclude_any"] = list(labels_exclude_any)
-        
+
         # These fields remain in package YAML for both formats
         if automatic_install and platform in ("darwin", "macos"):
             pkg_block["automatic_install"] = True
@@ -732,8 +768,8 @@ class FleetGitOpsUploader(Processor):
         self._write_yaml(pkg_yaml_path, pkg_block)
 
     def _ensure_team_yaml_has_package(
-        self, 
-        team_yaml_path: Path, 
+        self,
+        team_yaml_path: Path,
         ref_path: str,
         fleet_version: str,
         self_service: bool,
@@ -744,7 +780,7 @@ class FleetGitOpsUploader(Processor):
         For Fleet >= 4.73.0, also add targeting metadata to the software section."""
         y = self._read_yaml(team_yaml_path)
         is_new_format = self._is_fleet_473_or_higher(fleet_version)
-        
+
         if "software" not in y or y["software"] is None:
             y["software"] = {}
         if "packages" not in y["software"] or y["software"]["packages"] is None:
@@ -763,11 +799,11 @@ class FleetGitOpsUploader(Processor):
             return ""
 
         existing = [pkg_ref(p) for p in pkgs]
-        
+
         # Add package reference if not exists
         if ref_path not in existing:
             pkg_entry = {"path": ref_path}
-            
+
             # For new format (>= 4.73.0), add targeting metadata to package entry
             if is_new_format:
                 if self_service:
@@ -776,7 +812,7 @@ class FleetGitOpsUploader(Processor):
                     pkg_entry["labels_include_any"] = list(labels_include_any)
                 if labels_exclude_any:
                     pkg_entry["labels_exclude_any"] = list(labels_exclude_any)
-            
+
             pkgs.append(pkg_entry)
             modified = True
         else:
@@ -788,15 +824,21 @@ class FleetGitOpsUploader(Processor):
                             # Convert string to dict
                             pkg = {"path": pkg}
                             pkgs[i] = pkg
-                        
+
                         # Update targeting metadata
                         if self_service and pkg.get("self_service") != True:
                             pkg["self_service"] = True
                             modified = True
-                        if labels_include_any and pkg.get("labels_include_any") != labels_include_any:
+                        if (
+                            labels_include_any
+                            and pkg.get("labels_include_any") != labels_include_any
+                        ):
                             pkg["labels_include_any"] = list(labels_include_any)
                             modified = True
-                        if labels_exclude_any and pkg.get("labels_exclude_any") != labels_exclude_any:
+                        if (
+                            labels_exclude_any
+                            and pkg.get("labels_exclude_any") != labels_exclude_any
+                        ):
                             pkg["labels_exclude_any"] = list(labels_exclude_any)
                             modified = True
                         break
@@ -840,12 +882,16 @@ class FleetGitOpsUploader(Processor):
         if status not in (201, 422):
             raise ProcessorError(f"PR creation failed: {status} {resp_body}")
         pr = json.loads(resp_body or "{}")
-        pr_url = pr.get("html_url") or self._find_existing_pr_url(github_repo, github_token, head, base)
+        pr_url = pr.get("html_url") or self._find_existing_pr_url(
+            github_repo, github_token, head, base
+        )
 
         if labels and pr_url and "number" in pr:
             issue_api = f"https://api.github.com/repos/{github_repo}/issues/{pr['number']}/labels"
             issue_data = json.dumps({"labels": labels}).encode()
-            issue_req = urllib.request.Request(issue_api, data=issue_data, headers=headers, method="POST")
+            issue_req = urllib.request.Request(
+                issue_api, data=issue_data, headers=headers, method="POST"
+            )
             try:
                 urllib.request.urlopen(issue_req, timeout=30)
             except urllib.error.HTTPError:
@@ -855,7 +901,9 @@ class FleetGitOpsUploader(Processor):
         if reviewer and pr_url and "number" in pr:
             reviewers_api = f"https://api.github.com/repos/{github_repo}/pulls/{pr['number']}/requested_reviewers"
             reviewers_data = json.dumps({"reviewers": [reviewer]}).encode()
-            reviewers_req = urllib.request.Request(reviewers_api, data=reviewers_data, headers=headers, method="POST")
+            reviewers_req = urllib.request.Request(
+                reviewers_api, data=reviewers_data, headers=headers, method="POST"
+            )
             try:
                 urllib.request.urlopen(reviewers_req, timeout=30)
             except urllib.error.HTTPError:
@@ -879,5 +927,3 @@ class FleetGitOpsUploader(Processor):
         if data.get("items"):
             return data["items"][0]["html_url"]
         return ""
-
-
