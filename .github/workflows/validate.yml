@@ -9,14 +9,6 @@ on:
       - '*.yml'
       - 'requirements.txt'
       - '.github/workflows/**'
-  push:
-    branches: [ main ]
-    paths:
-      - '*.py'
-      - '*.yaml'
-      - '*.yml'
-      - 'requirements.txt'
-      - '.github/workflows/**'
 
 jobs:
   validate-python:
