@@ -78,7 +78,7 @@ class FleetGitOpsUploader(Processor):
         # Optional Fleet install flags
         "self_service": {
             "required": False,
-            "default": False,
+            "default": True,
             "description": "Whether the package is self-service.",
         },
         "automatic_install": {
@@ -150,7 +150,7 @@ class FleetGitOpsUploader(Processor):
         },
         "package_yaml_suffix": {
             "required": False,
-            "default": ".package.yml",
+            "default": ".yml",
             "description": "Suffix for package YAML files.",
         },
         "team_yaml_package_path_prefix": {
@@ -174,7 +174,7 @@ class FleetGitOpsUploader(Processor):
         },
         "pr_labels": {
             "required": False,
-            "default": [],
+            "default": ["autopkg"],
             "description": "List of GitHub PR labels to apply.",
         },
 
@@ -192,7 +192,7 @@ class FleetGitOpsUploader(Processor):
         },
         "branch_prefix": {
             "required": False,
-            "default": "",
+            "default": "autopkg",
             "description": "Optional prefix for branch names.",
         },
     }

@@ -2,7 +2,7 @@
 
 Upload a freshly built installer to Fleet using the Software API, then create or update the corresponding GitOps YAML in your Fleet GitOps repo and open a pull request. This processor is designed for CI use in GitHub Actions and can also be run locally.
 
-> **⚠️ Experimental:** FleetGitOpsUploader is a work in progress and should not be used in production environments under any circumstances.
+> **⚠️ Experimental:** This processor uses Fleet's [experimental software management API](https://fleetdm.com/docs/rest-api/rest-api#list-software), which is subject to breaking changes. Fleet may introduce API changes that require corresponding updates to this processor. **Production use is not recommended** due to the experimental nature of the underlying Fleet API.
 
 ## Current Limitations
 
@@ -41,22 +41,73 @@ Additionally, Fleet's GitOps workflow is driven by YAML files for software confi
 
 ---
 
-## Installation
+## Recipe Configuration
 
-1. Place `FleetGitOpsUploader.py` in an AutoPkg processor repo, for example:
-   ```
-   ~/Library/AutoPkg/RecipeRepos/com.github.yourorg.processors/FleetGitOpsUploader.py
-   ```
-2. Add your processor repo to AutoPkg search paths, for example:
-   ```bash
-   autopkg repo-add https://github.com/yourorg/autopkg-processors.git
-   # or set AUTOPKG_RECIPE_SEARCH_DIRS to include the folder
-   ```
-3. Ensure dependencies are available:
-   ```bash
-   pip install --upgrade pip
-   pip install requests PyYAML
-   ```
+### Environment Variable Configuration
+
+All recipe arguments use environment variables for maximum flexibility. The processor provides sensible defaults for optional arguments, so you only need to set the variables relevant to your environment.
+
+**Required Environment Variables:**
+```bash
+export FLEET_API_BASE="https://fleet.myorg.com"
+export FLEET_API_TOKEN="your-fleet-token"
+export FLEET_TEAM_ID="1"
+export FLEET_GITOPS_REPO_URL="https://github.com/myorg/fleet-gitops"
+export FLEET_GITOPS_GITHUB_TOKEN="your-github-token"
+export FLEET_GITOPS_AUTHOR_EMAIL="autopkg-bot@myorg.com"
+export FLEET_TEAM_YAML_PATH="teams/workstations.yml"
+```
+
+**Optional Environment Variables (with defaults):**
+```bash
+# Software configuration (defaults: platform=darwin, automatic_install=false, self_service=true)
+export FLEET_PLATFORM="darwin"
+export FLEET_SOFTWARE_SLUG="custom-slug"  # defaults to software title if not set
+export FLEET_AUTOMATIC_INSTALL="false"
+export FLEET_SELF_SERVICE="true"
+
+# Git configuration (defaults: base_branch=main, author_name=autopkg-bot)
+export FLEET_GIT_BASE_BRANCH="main"
+export FLEET_GIT_AUTHOR_NAME="autopkg-bot"
+
+# GitOps paths (defaults: software_dir=lib/macos/software, suffix=.yml, etc.)
+export FLEET_SOFTWARE_DIR="lib/macos/software"
+export FLEET_PACKAGE_YAML_SUFFIX=".yml"
+export FLEET_TEAM_YAML_PACKAGE_PATH_PREFIX="../lib/macos/software/"
+
+# Optional features (defaults: branch_prefix=autopkg, pr_labels=["autopkg"])
+export FLEET_BRANCH_PREFIX="autopkg"
+export FLEET_PR_LABELS='["autopkg", "software-update"]'
+export PR_REVIEWER="security-team"
+
+# Recipe-specific variables
+export GITHUB_DESKTOP_BUILD="darwin-arm64"  # for GitHub Desktop Apple Silicon builds
+```
+
+**Usage:**
+```bash
+# Set required variables once
+source your-fleet-env.sh
+
+# Run any recipe directly - no overrides needed!
+autopkg run GoogleChrome.fleet.recipe.yaml
+autopkg run Caffeine.fleet.recipe.yaml
+autopkg run GithubDesktop.fleet.recipe.yaml
+```
+
+### Argument Order Convention
+
+All recipe arguments use environment variables and are organized in logical groups:
+
+1. **Parent recipe requirements** - Special arguments needed by upstream recipes (e.g., `%GITHUB_DESKTOP_BUILD%`)
+2. **Core package info** - `%pkg_path%`, `%NAME%`, `%version%` (inherited from parent recipe)
+3. **Fleet API configuration** - `%FLEET_API_BASE%`, `%FLEET_API_TOKEN%`, `%FLEET_TEAM_ID%`
+4. **Software configuration** - `%FLEET_PLATFORM%`, `%FLEET_SOFTWARE_SLUG%`, install behavior
+5. **Git/GitHub configuration** - Repository URLs, tokens, branch, author info
+6. **GitOps file paths** - Team YAML path, software directory, path prefixes/suffixes
+7. **Optional features** - Branch prefix, PR labels, reviewer assignment
+
+The processor provides sensible defaults for most optional arguments, so you typically only need to set 7-10 environment variables for your entire AutoPkg setup.
 
 ---
 

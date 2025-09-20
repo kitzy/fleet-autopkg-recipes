@@ -6,27 +6,37 @@ MinimumVersion: '2.0'
 ParentRecipe: com.github.homebysix.pkg.Caffeine
 Process:
 - Arguments:
-    automatic_install: false
-    defaults_path: fleet.defaults.yaml
-    fleet_api_token: "%FLEET_API_TOKEN%"
-    github_token: "%FLEET_GITOPS_GITHUB_TOKEN%"
+    # Core package info (from parent recipe)
     pkg_path: "%pkg_path%"
-    platform: darwin
-    self_service: true
-    software_slug: caffeine
     software_title: "%NAME%"
     version: "%version%"
-    fleet_api_base: "https://fleet.kitzy.net"
-    team_id: 4
-    git_repo_url: "https://github.com/kitzy/fleet-gitops"
-    git_base_branch: "main"
-    git_author_name: "autopkg-bot"
-    git_author_email: "autopkg-bot@kitzy.net"
-    team_yaml_path: "teams/workstations.yml"
-    software_dir: "lib/macos/software"
-    package_yaml_suffix: ".yml"
-    team_yaml_package_path_prefix: "../lib/macos/software/"
-    pr_labels: ["autopkg"]          # or ["autopkg","software-update"]
-    branch_prefix: "autopkg"
-    PR_REVIEWER: "{{ PR_REVIEWER }}"
+    
+    # Fleet API configuration
+    fleet_api_base: "%FLEET_API_BASE%"
+    fleet_api_token: "%FLEET_API_TOKEN%"
+    team_id: "%FLEET_TEAM_ID%"
+    
+    # Software configuration
+    platform: "%FLEET_PLATFORM%"
+    software_slug: "%FLEET_SOFTWARE_SLUG%"
+    automatic_install: "%FLEET_AUTOMATIC_INSTALL%"
+    self_service: "%FLEET_SELF_SERVICE%"
+    
+    # Git/GitHub configuration
+    git_repo_url: "%FLEET_GITOPS_REPO_URL%"
+    github_token: "%FLEET_GITOPS_GITHUB_TOKEN%"
+    git_base_branch: "%FLEET_GIT_BASE_BRANCH%"
+    git_author_name: "%FLEET_GIT_AUTHOR_NAME%"
+    git_author_email: "%FLEET_GITOPS_AUTHOR_EMAIL%"
+    
+    # GitOps file paths
+    team_yaml_path: "%FLEET_TEAM_YAML_PATH%"
+    software_dir: "%FLEET_SOFTWARE_DIR%"
+    package_yaml_suffix: "%FLEET_PACKAGE_YAML_SUFFIX%"
+    team_yaml_package_path_prefix: "%FLEET_TEAM_YAML_PACKAGE_PATH_PREFIX%"
+    
+    # Optional features
+    branch_prefix: "%FLEET_BRANCH_PREFIX%"
+    pr_labels: "%FLEET_PR_LABELS%"
+    PR_REVIEWER: "%PR_REVIEWER%"
   Processor: FleetGitOpsUploader
