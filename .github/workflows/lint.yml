@@ -25,12 +25,12 @@ jobs:
     - name: Check Python formatting
       run: |
         echo "Checking Python code formatting..."
-        black --check --diff *.py
+        black --check --diff processors/FleetGitOpsUploader.py
         
     - name: Check import sorting
       run: |
         echo "Checking import order..."
-        isort --check-only --diff *.py
+        isort --check-only --diff processors/FleetGitOpsUploader.py
         
     - name: Run flake8
       run: |
@@ -45,7 +45,7 @@ jobs:
         import yaml
         import sys
         
-        files = ['Caffeine.fleet.recipe.yaml', 'GoogleChrome.fleet.recipe.yaml', 'GithubDesktop.fleet.recipe.yaml']
+        files = ['Caffeine/Caffeine.fleet.recipe.yaml', 'Google/GoogleChrome.fleet.recipe.yaml', 'GitHub/GithubDesktop.fleet.recipe.yaml', 'Chef/ChefDK.fleet.recipe.yaml', 'GPGSuite/GPGSuite.fleet.recipe.yaml', 'RubyMine/RubyMine.fleet.recipe.yaml']
         
         for file in files:
             try:

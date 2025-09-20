@@ -4,9 +4,9 @@ on:
   pull_request:
     branches: [ main ]
     paths:
-      - '*.py'
-      - '*.yaml'
-      - '*.yml'
+      - '**/*.py'
+      - '**/*.yaml'
+      - '**/*.yml'
       - 'requirements.txt'
       - '.github/workflows/**'
 
@@ -31,17 +31,17 @@ jobs:
         
     - name: Validate Python syntax
       run: |
-        python -m py_compile FleetGitOpsUploader.py
+        python -m py_compile processors/FleetGitOpsUploader.py
         echo "✅ Python syntax validation passed"
         
     - name: Check code formatting with black
       run: |
-        black --check --diff FleetGitOpsUploader.py
+        black --check --diff processors/FleetGitOpsUploader.py
         echo "✅ Code formatting check passed"
         
     - name: Check import sorting with isort
       run: |
-        isort --check-only --diff FleetGitOpsUploader.py
+        isort --check-only --diff processors/FleetGitOpsUploader.py
         echo "✅ Import sorting check passed"
         
     - name: Run pylint
@@ -50,7 +50,7 @@ jobs:
         pip install types-requests types-PyYAML
         # Run pylint with reasonable settings for AutoPkg processor
         set +e  # Don't exit on pylint warnings/errors
-        pylint --disable=import-error,missing-module-docstring,missing-class-docstring,missing-function-docstring,too-few-public-methods,too-many-instance-attributes,too-many-arguments,too-many-locals,too-many-branches,too-many-statements,line-too-long,invalid-name,too-many-return-statements,subprocess-run-check,no-else-return,unused-variable,too-many-positional-arguments,unused-argument,singleton-comparison,consider-using-with,unused-import,raise-missing-from FleetGitOpsUploader.py
+        pylint --disable=import-error,missing-module-docstring,missing-class-docstring,missing-function-docstring,too-few-public-methods,too-many-instance-attributes,too-many-arguments,too-many-locals,too-many-branches,too-many-statements,line-too-long,invalid-name,too-many-return-statements,subprocess-run-check,no-else-return,unused-variable,too-many-positional-arguments,unused-argument,singleton-comparison,consider-using-with,unused-import,raise-missing-from processors/FleetGitOpsUploader.py
         pylint_exit_code=$?
         set -e  # Re-enable exit on error
         echo "Pylint completed with exit code: $pylint_exit_code"
@@ -61,6 +61,9 @@ jobs:
         python -c "
         import sys
         import os
+        
+        # Add processors directory to Python path
+        sys.path.insert(0, 'processors')
         
         # Test that all required modules can be imported
         modules_to_test = ['requests', 'yaml', 'json', 'urllib.parse', 'datetime', 'pathlib']
@@ -101,7 +104,7 @@ jobs:
         import yaml
         import sys
         
-        recipe_files = ['Caffeine.fleet.recipe.yaml', 'GoogleChrome.fleet.recipe.yaml', 'GithubDesktop.fleet.recipe.yaml']
+        recipe_files = ['Caffeine/Caffeine.fleet.recipe.yaml', 'Google/GoogleChrome.fleet.recipe.yaml', 'GitHub/GithubDesktop.fleet.recipe.yaml', 'Chef/ChefDK.fleet.recipe.yaml', 'GPGSuite/GPGSuite.fleet.recipe.yaml', 'RubyMine/RubyMine.fleet.recipe.yaml']
         
         print('=== YAML Syntax Validation ===')
         
@@ -165,7 +168,7 @@ jobs:
         import yaml
         import sys
         
-        recipe_files = ['Caffeine.fleet.recipe.yaml', 'GoogleChrome.fleet.recipe.yaml', 'GithubDesktop.fleet.recipe.yaml']
+        recipe_files = ['Caffeine/Caffeine.fleet.recipe.yaml', 'Google/GoogleChrome.fleet.recipe.yaml', 'GitHub/GithubDesktop.fleet.recipe.yaml', 'Chef/ChefDK.fleet.recipe.yaml', 'GPGSuite/GPGSuite.fleet.recipe.yaml', 'RubyMine/RubyMine.fleet.recipe.yaml']
         
         print('=== Environment Variable Validation ===')
         
@@ -241,7 +244,7 @@ jobs:
         import yaml
         import sys
         
-        recipe_files = ['Caffeine.fleet.recipe.yaml', 'GoogleChrome.fleet.recipe.yaml', 'GithubDesktop.fleet.recipe.yaml']
+        recipe_files = ['Caffeine/Caffeine.fleet.recipe.yaml', 'Google/GoogleChrome.fleet.recipe.yaml', 'GitHub/GithubDesktop.fleet.recipe.yaml', 'Chef/ChefDK.fleet.recipe.yaml', 'GPGSuite/GPGSuite.fleet.recipe.yaml', 'RubyMine/RubyMine.fleet.recipe.yaml']
         
         print('=== Recipe Structure Validation ===')
         
@@ -307,20 +310,20 @@ jobs:
         
         # Check for hardcoded secrets or tokens (actual token values, not variable assignments)
         echo "Checking for hardcoded secrets..."
-        if grep -r -E "(token|password|secret|key)\s*=\s*['\"][a-zA-Z0-9_-]{10,}" *.yaml *.py | grep -v "%.*%" | grep -v "your-" | grep -v "example"; then
+        if find . -name "*.yaml" -o -name "*.py" | xargs grep -E "(token|password|secret|key)\s*=\s*['\"][a-zA-Z0-9_-]{10,}" | grep -v "%.*%" | grep -v "your-" | grep -v "example"; then
           echo "❌ Potential hardcoded tokens found"
           exit 1
         fi
         
         # Check for hardcoded API tokens that look like real tokens
-        if grep -r -E "(ghp_|sk_|pk_|xoxb-)[a-zA-Z0-9_-]{20,}" *.yaml *.py; then
+        if find . -name "*.yaml" -o -name "*.py" | xargs grep -E "(ghp_|sk_|pk_|xoxb-)[a-zA-Z0-9_-]{20,}"; then
           echo "❌ Real API tokens found in code"
           exit 1
         fi
         
         # Check for hardcoded URLs that aren't examples
         echo "Checking for hardcoded URLs..."
-        if grep -r "https://" *.yaml | grep -v "fleet.example.com" | grep -v "github.com/example" | grep -v "fleetdm.com/docs" | grep -v "github.com/autopkg" | grep -v "github.com/homebysix"; then
+        if find . -name "*.yaml" | xargs grep "https://" | grep -v "fleet.example.com" | grep -v "github.com/example" | grep -v "fleetdm.com/docs" | grep -v "github.com/autopkg" | grep -v "github.com/homebysix"; then
           echo "❌ Potential hardcoded URLs found (should use environment variables)"
           exit 1
         fi
@@ -376,6 +379,9 @@ jobs:
         python -c "
         import sys
         import os
+        
+        # Add processors directory to Python path for import testing
+        sys.path.insert(0, 'processors')
         
         # Test that the processor can be imported without AutoPkg
         print('Testing FleetGitOpsUploader import...')
