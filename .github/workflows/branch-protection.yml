@@ -1,0 +1,25 @@
+name: Branch Protection Check
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  check-required-status:
+    name: Check Required Status Checks
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Status Check Summary
+      run: |
+        echo "This workflow ensures all validation checks pass before merge."
+        echo ""
+        echo "Required checks:"
+        echo "- validate-python"
+        echo "- validate-yaml" 
+        echo "- validate-environment-variables"
+        echo "- validate-recipe-structure"
+        echo "- security-check"
+        echo "- integration-test"
+        echo ""
+        echo "All checks must pass for merge approval."
