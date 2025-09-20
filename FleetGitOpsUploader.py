@@ -288,6 +288,19 @@ class FleetGitOpsUploader(Processor):
         # Slug
         software_slug = self.env.get("software_slug", "").strip() or self._slugify(software_title)
 
+        # Query Fleet API to get server version for format detection
+        self.output("Querying Fleet server version...")
+        fleet_version = self._get_fleet_version(fleet_api_base, fleet_token)
+        self.output(f"Detected Fleet version: {fleet_version}")
+
+        # Check minimum version requirements
+        if not self._is_fleet_minimum_supported(fleet_version):
+            raise ProcessorError(
+                f"Fleet version {fleet_version} is not supported. "
+                f"This processor requires Fleet v4.70.0 or higher. "
+                f"Please upgrade your Fleet server to a supported version."
+            )
+
         # Upload to Fleet
         self.output("Uploading package to Fleet…")
         upload_info = self._fleet_upload_package(
@@ -364,6 +377,7 @@ class FleetGitOpsUploader(Processor):
                 install_script=install_script,
                 uninstall_script=uninstall_script,
                 post_install_script=post_install_script,
+                fleet_version=fleet_version,
             )
 
             # Ensure team YAML references the package YAML path
@@ -375,6 +389,10 @@ class FleetGitOpsUploader(Processor):
             team_yaml_modified = self._ensure_team_yaml_has_package(
                 team_yaml_abs,
                 ref_path=f"{team_yaml_prefix}{pkg_yaml_path.name}",
+                fleet_version=fleet_version,
+                self_service=self_service,
+                labels_include_any=labels_include_any,
+                labels_exclude_any=labels_exclude_any,
             )
 
             # Commit if changed
@@ -450,6 +468,76 @@ class FleetGitOpsUploader(Processor):
             self._git(["commit", "-m", message], cwd=cwd)
             return True
         return False
+
+    def _is_fleet_473_or_higher(self, fleet_version: str) -> bool:
+        """Check if Fleet version is 4.73.0 or higher (new YAML format)."""
+        try:
+            # Parse version string like "4.73.0" or "4.73.0-dev"
+            version_parts = fleet_version.split("-")[0].split(".")
+            major = int(version_parts[0])
+            minor = int(version_parts[1])
+            patch = int(version_parts[2]) if len(version_parts) > 2 else 0
+            
+            # Check if >= 4.73.0
+            if major > 4:
+                return True
+            elif major == 4 and minor > 73:
+                return True
+            elif major == 4 and minor == 73 and patch >= 0:
+                return True
+            return False
+        except (ValueError, IndexError):
+            # Default to old format if version parsing fails
+            return False
+
+    def _is_fleet_minimum_supported(self, fleet_version: str) -> bool:
+        """Check if Fleet version meets minimum requirements (>= 4.70.0)."""
+        try:
+            # Parse version string like "4.70.0" or "4.70.0-dev"
+            version_parts = fleet_version.split("-")[0].split(".")
+            major = int(version_parts[0])
+            minor = int(version_parts[1])
+            patch = int(version_parts[2]) if len(version_parts) > 2 else 0
+            
+            # Check if >= 4.70.0
+            if major > 4:
+                return True
+            elif major == 4 and minor >= 70:
+                return True
+            return False
+        except (ValueError, IndexError):
+            # If we can't parse the version, assume it's supported to avoid blocking
+            return True
+
+    def _get_fleet_version(self, fleet_api_base: str, fleet_token: str) -> str:
+        """Query Fleet API to get the server version.
+        
+        Returns the semantic version string (e.g., "4.73.0").
+        If the query fails, defaults to "4.73.0" (new format) assuming a modern deployment.
+        """
+        try:
+            url = f"{fleet_api_base}/api/v1/fleet/version"
+            headers = {
+                "Authorization": f"Bearer {fleet_token}",
+                "Accept": "application/json",
+            }
+            req = urllib.request.Request(url, headers=headers)
+            
+            with urllib.request.urlopen(req, timeout=30) as resp:
+                if resp.getcode() == 200:
+                    data = json.loads(resp.read().decode())
+                    version = data.get("version", "")
+                    if version:
+                        # Parse version string like "4.73.0-dev" or "4.73.0"
+                        # Extract just the semantic version part
+                        return version.split("-")[0]
+            
+        except (urllib.error.HTTPError, urllib.error.URLError, json.JSONDecodeError, KeyError):
+            # If we can't get the version, assume new format for modern deployments
+            pass
+        
+        # Default to new format version if query fails (assume modern Fleet deployment)
+        return "4.73.0"
 
     @staticmethod
     def _pr_body(
@@ -593,11 +681,13 @@ class FleetGitOpsUploader(Processor):
         install_script: str,
         uninstall_script: str,
         post_install_script: str,
+        fleet_version: str,
     ):
         """
         We store the package metadata in a YAML the GitOps worker can apply.
-        Follows Fleet's GitOps 'packages' schema conventions and puts targeting
-        keys (labels/categories/self_service) where Fleet expects them for custom packages.
+        Format automatically determined by querying Fleet API version:
+        - Fleet < 4.73.0: targeting keys go in package files
+        - Fleet >= 4.73.0: targeting keys go in team YAML software section
         """
         data = self._read_yaml(pkg_yaml_path)
 
@@ -613,13 +703,20 @@ class FleetGitOpsUploader(Processor):
         if hash_sha256:
             pkg_block["hash_sha256"] = hash_sha256
 
-        # Optional targeting and behavior
-        if self_service:
-            pkg_block["self_service"] = True
-        if labels_include_any:
-            pkg_block["labels_include_any"] = list(labels_include_any)
-        if labels_exclude_any:
-            pkg_block["labels_exclude_any"] = list(labels_exclude_any)
+        # Check if we're using the new format (>= 4.73.0)
+        is_new_format = self._is_fleet_473_or_higher(fleet_version)
+
+        # Optional targeting and behavior - only for old format (< 4.73.0)
+        # In new format, these go in team YAML software section
+        if not is_new_format:
+            if self_service:
+                pkg_block["self_service"] = True
+            if labels_include_any:
+                pkg_block["labels_include_any"] = list(labels_include_any)
+            if labels_exclude_any:
+                pkg_block["labels_exclude_any"] = list(labels_exclude_any)
+        
+        # These fields remain in package YAML for both formats
         if automatic_install and platform in ("darwin", "macos"):
             pkg_block["automatic_install"] = True
         if pre_install_query:
@@ -634,15 +731,27 @@ class FleetGitOpsUploader(Processor):
         # Write the package fields directly without a top-level wrapper.
         self._write_yaml(pkg_yaml_path, pkg_block)
 
-    def _ensure_team_yaml_has_package(self, team_yaml_path: Path, ref_path: str) -> bool:
-        """Ensure team YAML includes software.packages with the given ref_path."""
+    def _ensure_team_yaml_has_package(
+        self, 
+        team_yaml_path: Path, 
+        ref_path: str,
+        fleet_version: str,
+        self_service: bool,
+        labels_include_any: list[str],
+        labels_exclude_any: list[str],
+    ) -> bool:
+        """Ensure team YAML includes software.packages with the given ref_path.
+        For Fleet >= 4.73.0, also add targeting metadata to the software section."""
         y = self._read_yaml(team_yaml_path)
+        is_new_format = self._is_fleet_473_or_higher(fleet_version)
+        
         if "software" not in y or y["software"] is None:
             y["software"] = {}
         if "packages" not in y["software"] or y["software"]["packages"] is None:
             y["software"]["packages"] = []
 
         pkgs = y["software"]["packages"]
+        modified = False
 
         # Normalize existing paths into comparable strings
         def pkg_ref(p):
@@ -654,11 +763,47 @@ class FleetGitOpsUploader(Processor):
             return ""
 
         existing = [pkg_ref(p) for p in pkgs]
+        
+        # Add package reference if not exists
         if ref_path not in existing:
-            pkgs.append({"path": ref_path})
+            pkg_entry = {"path": ref_path}
+            
+            # For new format (>= 4.73.0), add targeting metadata to package entry
+            if is_new_format:
+                if self_service:
+                    pkg_entry["self_service"] = True
+                if labels_include_any:
+                    pkg_entry["labels_include_any"] = list(labels_include_any)
+                if labels_exclude_any:
+                    pkg_entry["labels_exclude_any"] = list(labels_exclude_any)
+            
+            pkgs.append(pkg_entry)
+            modified = True
+        else:
+            # For new format, update existing package entry with targeting metadata
+            if is_new_format:
+                for i, pkg in enumerate(pkgs):
+                    if pkg_ref(pkg) == ref_path:
+                        if isinstance(pkg, str):
+                            # Convert string to dict
+                            pkg = {"path": pkg}
+                            pkgs[i] = pkg
+                        
+                        # Update targeting metadata
+                        if self_service and pkg.get("self_service") != True:
+                            pkg["self_service"] = True
+                            modified = True
+                        if labels_include_any and pkg.get("labels_include_any") != labels_include_any:
+                            pkg["labels_include_any"] = list(labels_include_any)
+                            modified = True
+                        if labels_exclude_any and pkg.get("labels_exclude_any") != labels_exclude_any:
+                            pkg["labels_exclude_any"] = list(labels_exclude_any)
+                            modified = True
+                        break
+
+        if modified:
             self._write_yaml(team_yaml_path, y)
-            return True
-        return False
+        return modified
 
     def _open_pull_request(
         self,
