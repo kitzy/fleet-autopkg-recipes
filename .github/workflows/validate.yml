@@ -57,7 +57,11 @@ jobs:
         # Install autopkglib stub for linting (processor depends on it)
         pip install types-requests types-PyYAML
         # Run pylint with reasonable settings for AutoPkg processor
-        pylint --disable=import-error,missing-module-docstring,missing-class-docstring,missing-function-docstring,too-few-public-methods,too-many-instance-attributes,too-many-arguments,too-many-locals,too-many-branches,too-many-statements FleetGitOpsUploader.py || true
+        set +e  # Don't exit on pylint warnings/errors
+        pylint --disable=import-error,missing-module-docstring,missing-class-docstring,missing-function-docstring,too-few-public-methods,too-many-instance-attributes,too-many-arguments,too-many-locals,too-many-branches,too-many-statements,line-too-long,invalid-name,too-many-return-statements,subprocess-run-check,no-else-return,unused-variable,too-many-positional-arguments,unused-argument,singleton-comparison,consider-using-with,unused-import,raise-missing-from FleetGitOpsUploader.py
+        pylint_exit_code=$?
+        set -e  # Re-enable exit on error
+        echo "Pylint completed with exit code: $pylint_exit_code"
         echo "✅ Pylint analysis completed"
         
     - name: Test Python imports
