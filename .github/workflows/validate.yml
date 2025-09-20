@@ -1,0 +1,452 @@
+name: Validate Recipes and Processor
+
+on:
+  pull_request:
+    branches: [ main ]
+    paths:
+      - '*.py'
+      - '*.yaml'
+      - '*.yml'
+      - 'requirements.txt'
+      - '.github/workflows/**'
+  push:
+    branches: [ main ]
+    paths:
+      - '*.py'
+      - '*.yaml'
+      - '*.yml'
+      - 'requirements.txt'
+      - '.github/workflows/**'
+
+jobs:
+  validate-python:
+    name: Validate Python Processor
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python 3.9
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install requests PyYAML pylint black isort mypy
+        
+    - name: Validate Python syntax
+      run: |
+        python -m py_compile FleetGitOpsUploader.py
+        echo "✅ Python syntax validation passed"
+        
+    - name: Check code formatting with black
+      run: |
+        black --check --diff FleetGitOpsUploader.py
+        echo "✅ Code formatting check passed"
+        
+    - name: Check import sorting with isort
+      run: |
+        isort --check-only --diff FleetGitOpsUploader.py
+        echo "✅ Import sorting check passed"
+        
+    - name: Run pylint
+      run: |
+        # Install autopkglib stub for linting (processor depends on it)
+        pip install types-requests types-PyYAML
+        # Run pylint with reasonable settings for AutoPkg processor
+        pylint --disable=import-error,missing-module-docstring,missing-class-docstring,missing-function-docstring,too-few-public-methods,too-many-instance-attributes,too-many-arguments,too-many-locals,too-many-branches,too-many-statements FleetGitOpsUploader.py || true
+        echo "✅ Pylint analysis completed"
+        
+    - name: Test Python imports
+      run: |
+        python -c "
+        import sys
+        import os
+        
+        # Test that all required modules can be imported
+        modules_to_test = ['requests', 'yaml', 'json', 'urllib.parse', 'datetime', 'pathlib']
+        
+        print('Testing Python module imports...')
+        for module in modules_to_test:
+            try:
+                __import__(module)
+                print(f'✅ {module}')
+            except ImportError as e:
+                print(f'❌ {module}: {e}')
+                sys.exit(1)
+                
+        print('✅ All required modules can be imported')
+        "
+
+  validate-yaml:
+    name: Validate YAML Recipes
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python 3.9
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+        
+    - name: Install PyYAML
+      run: |
+        python -m pip install --upgrade pip
+        pip install PyYAML
+        
+    - name: Validate YAML syntax
+      run: |
+        python -c "
+        import yaml
+        import sys
+        
+        recipe_files = ['Caffeine.fleet.recipe.yaml', 'GoogleChrome.fleet.recipe.yaml', 'GithubDesktop.fleet.recipe.yaml']
+        
+        print('=== YAML Syntax Validation ===')
+        
+        for recipe_file in recipe_files:
+            try:
+                with open(recipe_file, 'r') as f:
+                    data = yaml.safe_load(f)
+                print(f'✅ {recipe_file} - Valid YAML syntax')
+                
+                # Check required AutoPkg recipe fields
+                required_fields = ['Description', 'Identifier', 'Input', 'Process']
+                missing = [field for field in required_fields if field not in data]
+                if missing:
+                    print(f'❌ {recipe_file} - Missing required fields: {missing}')
+                    sys.exit(1)
+                else:
+                    print(f'   ✅ All required AutoPkg fields present')
+                    
+                # Check that Process contains FleetGitOpsUploader
+                process_list = data.get('Process', [])
+                has_processor = any(
+                    item.get('Processor') == 'FleetGitOpsUploader' 
+                    for item in process_list 
+                    if isinstance(item, dict)
+                )
+                
+                if has_processor:
+                    print(f'   ✅ FleetGitOpsUploader processor found')
+                else:
+                    print(f'❌ {recipe_file} - FleetGitOpsUploader processor not found')
+                    sys.exit(1)
+                    
+            except Exception as e:
+                print(f'❌ {recipe_file} - YAML error: {e}')
+                sys.exit(1)
+                
+        print('✅ All YAML recipes validated successfully')
+        "
+
+  validate-environment-variables:
+    name: Validate Environment Variable Usage
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python 3.9
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+        
+    - name: Install PyYAML
+      run: |
+        python -m pip install --upgrade pip
+        pip install PyYAML
+        
+    - name: Validate environment variable consistency
+      run: |
+        python -c "
+        import yaml
+        import sys
+        
+        recipe_files = ['Caffeine.fleet.recipe.yaml', 'GoogleChrome.fleet.recipe.yaml', 'GithubDesktop.fleet.recipe.yaml']
+        
+        print('=== Environment Variable Validation ===')
+        
+        all_env_vars = set()
+        
+        for recipe_file in recipe_files:
+            with open(recipe_file, 'r') as f:
+                data = yaml.safe_load(f)
+            
+            print(f'📋 {recipe_file}')
+            args = data.get('Process', [{}])[0].get('Arguments', {})
+            
+            env_vars = []
+            non_env_vars = []
+            
+            for key, value in args.items():
+                if isinstance(value, str) and value.startswith('%') and value.endswith('%'):
+                    env_var = value[1:-1]  # Remove % signs
+                    env_vars.append(env_var)
+                    all_env_vars.add(env_var)
+                else:
+                    non_env_vars.append(f'{key}: {value}')
+            
+            print(f'   Environment variables: {len(env_vars)}')
+            print(f'   Non-environment values: {len(non_env_vars)}')
+            
+            if non_env_vars:
+                print(f'   ⚠️  Non-environment values found:')
+                for val in non_env_vars:
+                    print(f'      • {val}')
+            else:
+                print(f'   ✅ All arguments use environment variables')
+        
+        print(f'\n🎯 Total unique environment variables: {len(all_env_vars)}')
+        
+        # Check for required environment variables
+        required_vars = [
+            'FLEET_API_BASE', 'FLEET_API_TOKEN', 'FLEET_TEAM_ID',
+            'FLEET_GITOPS_REPO_URL', 'FLEET_GITOPS_GITHUB_TOKEN', 
+            'FLEET_GITOPS_AUTHOR_EMAIL', 'FLEET_TEAM_YAML_PATH'
+        ]
+        
+        missing_required = [var for var in required_vars if var not in all_env_vars]
+        if missing_required:
+            print(f'❌ Missing required environment variables: {missing_required}')
+            sys.exit(1)
+        
+        print('✅ All required environment variables are used in recipes')
+        print('✅ Environment variable validation completed successfully')
+        "
+
+  validate-recipe-structure:
+    name: Validate Recipe Structure
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python 3.9
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+        
+    - name: Install PyYAML
+      run: |
+        python -m pip install --upgrade pip
+        pip install PyYAML
+        
+    - name: Validate recipe structure and consistency
+      run: |
+        python -c "
+        import yaml
+        import sys
+        
+        recipe_files = ['Caffeine.fleet.recipe.yaml', 'GoogleChrome.fleet.recipe.yaml', 'GithubDesktop.fleet.recipe.yaml']
+        
+        print('=== Recipe Structure Validation ===')
+        
+        expected_structure = [
+            'Parent recipe requirements',
+            'Core package info (from parent recipe)', 
+            'Fleet API configuration',
+            'Software configuration',
+            'Git/GitHub configuration',
+            'GitOps file paths',
+            'Optional features'
+        ]
+        
+        for recipe_file in recipe_files:
+            with open(recipe_file, 'r') as f:
+                content = f.read()
+                data = yaml.safe_load(content)
+            
+            print(f'📋 {recipe_file}')
+            
+            # Check for comment structure indicating proper organization
+            comment_sections = []
+            for section in expected_structure:
+                if f'# {section}' in content:
+                    comment_sections.append(section)
+            
+            print(f'   Comment sections found: {len(comment_sections)}/{len(expected_structure)}')
+            
+            # Validate specific fields exist
+            args = data.get('Process', [{}])[0].get('Arguments', {})
+            
+            # Check for core required arguments
+            core_args = ['pkg_path', 'software_title', 'version', 'fleet_api_base', 'fleet_api_token']
+            missing_core = [arg for arg in core_args if arg not in args]
+            
+            if missing_core:
+                print(f'❌ Missing core arguments: {missing_core}')
+                sys.exit(1)
+            else:
+                print(f'   ✅ All core arguments present')
+                
+            # Check ParentRecipe exists
+            if 'ParentRecipe' not in data:
+                print(f'❌ Missing ParentRecipe field')
+                sys.exit(1)
+            else:
+                print(f'   ✅ ParentRecipe: {data[\"ParentRecipe\"]}')
+        
+        print('✅ Recipe structure validation completed successfully')
+        "
+
+  security-check:
+    name: Security and Best Practices Check
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Check for security issues
+      run: |
+        echo "=== Security Check ==="
+        
+        # Check for hardcoded secrets or tokens
+        echo "Checking for hardcoded secrets..."
+        if grep -r -i "token.*=" *.yaml *.py | grep -v "%.*%" | grep -v "your-" | grep -v "example" | grep -v "fleet_api_token.*required" | grep -v "github_token.*required"; then
+          echo "❌ Potential hardcoded tokens found"
+          exit 1
+        fi
+        
+        # Check for hardcoded URLs that aren't examples
+        echo "Checking for hardcoded URLs..."
+        if grep -r "https://" *.yaml | grep -v "fleet.example.com" | grep -v "github.com/example" | grep -v "fleetdm.com/docs" | grep -v "github.com/autopkg" | grep -v "github.com/homebysix"; then
+          echo "❌ Potential hardcoded URLs found (should use environment variables)"
+          exit 1
+        fi
+        
+        # Check that environment variables are properly formatted
+        echo "Checking environment variable format..."
+        if grep -r "%[^%]*[^%]$" *.yaml; then
+          echo "❌ Malformed environment variables found (missing closing %)"
+          exit 1
+        fi
+        
+        echo "✅ Security check passed"
+        
+        # Check documentation completeness
+        echo "Checking documentation..."
+        
+        if ! grep -q "⚠️ Experimental" README.md; then
+          echo "❌ Missing experimental warning in README"
+          exit 1
+        fi
+        
+        if ! grep -q "Production use is not recommended" README.md; then
+          echo "❌ Missing production warning in README"
+          exit 1
+        fi
+        
+        if ! grep -q "FLEET_API_BASE" README.md; then
+          echo "❌ Missing environment variable documentation"
+          exit 1
+        fi
+        
+        echo "✅ Documentation check passed"
+
+  integration-test:
+    name: Integration Test
+    runs-on: ubuntu-latest
+    needs: [validate-python, validate-yaml, validate-environment-variables, validate-recipe-structure]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python 3.9
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install requests PyYAML
+        
+    - name: Test processor import and basic functionality
+      run: |
+        python -c "
+        import sys
+        import os
+        
+        # Test that the processor can be imported without AutoPkg
+        print('Testing FleetGitOpsUploader import...')
+        
+        # Mock autopkglib for testing
+        import types
+        autopkglib = types.ModuleType('autopkglib')
+        
+        class MockProcessor:
+            input_variables = {}
+            output_variables = {}
+            description = ''
+            
+            def __init__(self):
+                pass
+                
+            def output(self, message):
+                print(f'Output: {message}')
+        
+        class MockProcessorError(Exception):
+            pass
+            
+        autopkglib.Processor = MockProcessor
+        autopkglib.ProcessorError = MockProcessorError
+        
+        sys.modules['autopkglib'] = autopkglib
+        
+        # Now try to import our processor
+        try:
+            from FleetGitOpsUploader import FleetGitOpsUploader
+            print('✅ FleetGitOpsUploader imported successfully')
+            
+            # Test basic instantiation
+            processor = FleetGitOpsUploader()
+            print('✅ FleetGitOpsUploader instantiated successfully')
+            
+            # Check that input/output variables are defined
+            if hasattr(processor, 'input_variables') and processor.input_variables:
+                print(f'✅ Input variables defined: {len(processor.input_variables)} variables')
+            else:
+                print('❌ No input variables defined')
+                sys.exit(1)
+                
+            if hasattr(processor, 'output_variables') and processor.output_variables:
+                print(f'✅ Output variables defined: {len(processor.output_variables)} variables')
+            else:
+                print('❌ No output variables defined')
+                sys.exit(1)
+                
+        except Exception as e:
+            print(f'❌ Failed to import FleetGitOpsUploader: {e}')
+            sys.exit(1)
+        
+        print('✅ Integration test passed')
+        "
+
+  validate-final:
+    name: Final Validation Summary
+    runs-on: ubuntu-latest
+    needs: [validate-python, validate-yaml, validate-environment-variables, validate-recipe-structure, security-check, integration-test]
+    
+    steps:
+    - name: Summary
+      run: |
+        echo "🎉 All validation checks passed!"
+        echo ""
+        echo "✅ Python processor validation"
+        echo "✅ YAML recipe validation" 
+        echo "✅ Environment variable validation"
+        echo "✅ Recipe structure validation"
+        echo "✅ Security and best practices check"
+        echo "✅ Integration test"
+        echo ""
+        echo "Ready for merge! 🚀"

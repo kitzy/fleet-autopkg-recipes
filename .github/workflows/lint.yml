@@ -1,0 +1,59 @@
+name: Code Quality
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  lint:
+    name: Lint and Format Check
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+        
+    - name: Install linting tools
+      run: |
+        python -m pip install --upgrade pip
+        pip install black isort flake8 PyYAML
+        
+    - name: Check Python formatting
+      run: |
+        echo "Checking Python code formatting..."
+        black --check --diff *.py
+        
+    - name: Check import sorting
+      run: |
+        echo "Checking import order..."
+        isort --check-only --diff *.py
+        
+    - name: Run flake8
+      run: |
+        echo "Running flake8 linting..."
+        flake8 *.py --max-line-length=88 --ignore=E203,W503,E501
+        
+    - name: Validate YAML formatting
+      run: |
+        echo "Checking YAML files..."
+        python -c "
+        import yaml
+        import sys
+        
+        files = ['Caffeine.fleet.recipe.yaml', 'GoogleChrome.fleet.recipe.yaml', 'GithubDesktop.fleet.recipe.yaml']
+        
+        for file in files:
+            try:
+                with open(file, 'r') as f:
+                    yaml.safe_load(f)
+                print(f'✅ {file}')
+            except Exception as e:
+                print(f'❌ {file}: {e}')
+                sys.exit(1)
+        "
