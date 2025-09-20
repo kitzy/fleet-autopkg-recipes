@@ -208,7 +208,7 @@ jobs:
         required_vars = [
             'FLEET_API_BASE', 'FLEET_API_TOKEN', 'FLEET_TEAM_ID',
             'FLEET_GITOPS_REPO_URL', 'FLEET_GITOPS_GITHUB_TOKEN', 
-            'FLEET_GITOPS_AUTHOR_EMAIL', 'FLEET_TEAM_YAML_PATH'
+            'FLEET_TEAM_YAML_PATH'
         ]
         
         missing_required = [var for var in required_vars if var not in all_env_vars]
