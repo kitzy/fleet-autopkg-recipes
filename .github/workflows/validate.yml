@@ -104,7 +104,7 @@ jobs:
         import yaml
         import sys
         
-        recipe_files = ['Caffeine/Caffeine.fleet.recipe.yaml', 'Google/GoogleChrome.fleet.recipe.yaml', 'GitHub/GithubDesktop.fleet.recipe.yaml', 'Chef/ChefDK.fleet.recipe.yaml', 'GPGSuite/GPGSuite.fleet.recipe.yaml', 'RubyMine/RubyMine.fleet.recipe.yaml']
+        recipe_files = ['Caffeine/Caffeine.fleet.recipe.yaml', 'Google/GoogleChrome.fleet.recipe.yaml', 'GitHub/GithubDesktop.fleet.recipe.yaml', 'GPGSuite/GPGSuite.fleet.recipe.yaml', 'RubyMine/RubyMine.fleet.recipe.yaml']
         
         print('=== YAML Syntax Validation ===')
         
@@ -168,7 +168,7 @@ jobs:
         import yaml
         import sys
         
-        recipe_files = ['Caffeine/Caffeine.fleet.recipe.yaml', 'Google/GoogleChrome.fleet.recipe.yaml', 'GitHub/GithubDesktop.fleet.recipe.yaml', 'Chef/ChefDK.fleet.recipe.yaml', 'GPGSuite/GPGSuite.fleet.recipe.yaml', 'RubyMine/RubyMine.fleet.recipe.yaml']
+        recipe_files = ['Caffeine/Caffeine.fleet.recipe.yaml', 'Google/GoogleChrome.fleet.recipe.yaml', 'GitHub/GithubDesktop.fleet.recipe.yaml', 'GPGSuite/GPGSuite.fleet.recipe.yaml', 'RubyMine/RubyMine.fleet.recipe.yaml']
         
         print('=== Environment Variable Validation ===')
         
@@ -244,7 +244,7 @@ jobs:
         import yaml
         import sys
         
-        recipe_files = ['Caffeine/Caffeine.fleet.recipe.yaml', 'Google/GoogleChrome.fleet.recipe.yaml', 'GitHub/GithubDesktop.fleet.recipe.yaml', 'Chef/ChefDK.fleet.recipe.yaml', 'GPGSuite/GPGSuite.fleet.recipe.yaml', 'RubyMine/RubyMine.fleet.recipe.yaml']
+        recipe_files = ['Caffeine/Caffeine.fleet.recipe.yaml', 'Google/GoogleChrome.fleet.recipe.yaml', 'GitHub/GithubDesktop.fleet.recipe.yaml', 'GPGSuite/GPGSuite.fleet.recipe.yaml', 'RubyMine/RubyMine.fleet.recipe.yaml']
         
         print('=== Recipe Structure Validation ===')
         
