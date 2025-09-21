@@ -103,10 +103,15 @@ jobs:
         python -c "
         import yaml
         import sys
+        import glob
         
-        recipe_files = ['Caffeine/Caffeine.fleet.recipe.yaml', 'Google/GoogleChrome.fleet.recipe.yaml', 'GitHub/GithubDesktop.fleet.recipe.yaml', 'GPGSuite/GPGSuite.fleet.recipe.yaml', 'RubyMine/RubyMine.fleet.recipe.yaml']
+        recipe_files = glob.glob('**/*.recipe.yaml', recursive=True)
         
         print('=== YAML Syntax Validation ===')
+        print(f'Found {len(recipe_files)} recipe files to validate:')
+        for f in sorted(recipe_files):
+            print(f'  • {f}')
+        print()
         
         for recipe_file in recipe_files:
             try:
@@ -167,10 +172,15 @@ jobs:
         python -c "
         import yaml
         import sys
+        import glob
         
-        recipe_files = ['Caffeine/Caffeine.fleet.recipe.yaml', 'Google/GoogleChrome.fleet.recipe.yaml', 'GitHub/GithubDesktop.fleet.recipe.yaml', 'GPGSuite/GPGSuite.fleet.recipe.yaml', 'RubyMine/RubyMine.fleet.recipe.yaml']
+        recipe_files = glob.glob('**/*.recipe.yaml', recursive=True)
         
         print('=== Environment Variable Validation ===')
+        print(f'Found {len(recipe_files)} recipe files to validate:')
+        for f in sorted(recipe_files):
+            print(f'  • {f}')
+        print()
         
         all_env_vars = set()
         
@@ -243,10 +253,15 @@ jobs:
         python -c "
         import yaml
         import sys
+        import glob
         
-        recipe_files = ['Caffeine/Caffeine.fleet.recipe.yaml', 'Google/GoogleChrome.fleet.recipe.yaml', 'GitHub/GithubDesktop.fleet.recipe.yaml', 'GPGSuite/GPGSuite.fleet.recipe.yaml', 'RubyMine/RubyMine.fleet.recipe.yaml']
+        recipe_files = glob.glob('**/*.recipe.yaml', recursive=True)
         
         print('=== Recipe Structure Validation ===')
+        print(f'Found {len(recipe_files)} recipe files to validate:')
+        for f in sorted(recipe_files):
+            print(f'  • {f}')
+        print()
         
         expected_structure = [
             'Parent recipe requirements',
