@@ -44,8 +44,14 @@ jobs:
         python -c "
         import yaml
         import sys
+        import glob
         
-        files = ['Caffeine/Caffeine.fleet.recipe.yaml', 'Google/GoogleChrome.fleet.recipe.yaml', 'GitHub/GithubDesktop.fleet.recipe.yaml', 'GPGSuite/GPGSuite.fleet.recipe.yaml', 'RubyMine/RubyMine.fleet.recipe.yaml']
+        files = glob.glob('**/*.recipe.yaml', recursive=True)
+        
+        print(f'Found {len(files)} recipe files to validate:')
+        for f in sorted(files):
+            print(f'  • {f}')
+        print()
         
         for file in files:
             try:
