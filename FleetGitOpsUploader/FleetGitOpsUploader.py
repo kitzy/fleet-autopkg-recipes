@@ -471,7 +471,11 @@ class FleetGitOpsUploader(Processor):
             base=git_base_branch,
             title=f"{software_title} {returned_version}",
             body=self._pr_body(
-                software_title, returned_version, software_slug, title_id, installer_id
+                software_title,
+                returned_version,
+                software_slug,
+                title_id,
+                installer_id,
             ),
             labels=pr_labels,
             reviewer=pr_reviewer,
@@ -760,7 +764,6 @@ class FleetGitOpsUploader(Processor):
         - Fleet < 4.74.0: targeting keys go in package files
         - Fleet >= 4.74.0: targeting keys go in team YAML software section
         """
-        data = self._read_yaml(pkg_yaml_path)
 
         # Compose content. If GitOps runner expects `path:`, you’ll reference this file
         # from team YAML. Inside the file we set the package fields Fleet understands.
@@ -812,7 +815,8 @@ class FleetGitOpsUploader(Processor):
         labels_exclude_any: list[str],
     ) -> bool:
         """Ensure team YAML includes software.packages with the given ref_path.
-        For Fleet >= 4.74.0, also add targeting metadata to the software section."""
+        For Fleet >= 4.74.0, also add targeting metadata to the software section.
+        """
         y = self._read_yaml(team_yaml_path)
         is_new_format = self._is_fleet_474_or_higher(fleet_version)
 
@@ -861,7 +865,7 @@ class FleetGitOpsUploader(Processor):
                             pkgs[i] = pkg
 
                         # Update targeting metadata
-                        if self_service and pkg.get("self_service") != True:
+                        if self_service and not pkg.get("self_service"):
                             pkg["self_service"] = True
                             modified = True
                         if (
@@ -937,7 +941,10 @@ class FleetGitOpsUploader(Processor):
             reviewers_api = f"https://api.github.com/repos/{github_repo}/pulls/{pr['number']}/requested_reviewers"
             reviewers_data = json.dumps({"reviewers": [reviewer]}).encode()
             reviewers_req = urllib.request.Request(
-                reviewers_api, data=reviewers_data, headers=headers, method="POST"
+                reviewers_api,
+                data=reviewers_data,
+                headers=headers,
+                method="POST",
             )
             try:
                 urllib.request.urlopen(reviewers_req, timeout=GITHUB_REVIEWER_TIMEOUT)

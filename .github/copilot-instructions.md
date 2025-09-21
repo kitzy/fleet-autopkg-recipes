@@ -9,16 +9,19 @@ Always reference these instructions first and fallback to search or bash command
 ### Bootstrap and Setup (macOS required for AutoPkg)
 - Install Python dependencies:
   - `python3 -m pip install --upgrade pip`
-  - `python3 -m pip install requests PyYAML` -- takes 10-30 seconds. NEVER CANCEL.
+  - `python3 -m pip install requests PyYAML black isort flake8 flake8-bugbear` -- takes 10-30 seconds. NEVER CANCEL.
 - Install AutoPkg (macOS only):
   - `brew install autopkg` -- takes 2-5 minutes. NEVER CANCEL. Set timeout to 10+ minutes.
   - `autopkg version`
 - Configure AutoPkg repositories:
   - `autopkg repo-add https://github.com/autopkg/recipes.git` -- takes 30-60 seconds. NEVER CANCEL.
   - `autopkg repo-add https://github.com/autopkg/homebysix-recipes.git` -- takes 30-60 seconds. NEVER CANCEL.
-  - `autopkg repo-add https://github.com/kitzy/fleet-autopkg-recipes.git` -- takes 30-60 seconds. NEVER CANCEL.
-- Validate Python syntax:
+  - `autopkg repo-add https://github.com/fleetdm/fleet-autopkg-recipes.git` -- takes 30-60 seconds. NEVER CANCEL.
+- Validate Python syntax and code style:
   - `python3 -m py_compile FleetGitOpsUploader.py` -- takes < 1 second.
+  - `python3 -m black --check FleetGitOpsUploader.py` -- takes < 1 second.
+  - `python3 -m isort --check-only FleetGitOpsUploader.py` -- takes < 1 second.
+  - `python3 -m flake8 FleetGitOpsUploader.py` -- takes < 1 second.
 
 ### Critical macOS Setup Notes
 - AutoPkg ONLY works on macOS. Do not attempt to install on Linux/Windows.
@@ -44,10 +47,35 @@ Always reference these instructions first and fallback to search or bash command
 - Test environment variable substitution in recipes
 - **ALWAYS write recipes in YAML format, not XML** - This repository uses YAML recipes exclusively
 
+## AutoPkg Code Style Requirements
+
+This project follows AutoPkg's strict code style requirements. ALL Python code must pass these three checks before being committed:
+
+### 1. Black Formatting
+- Run: `python3 -m black --check --diff FleetGitOpsUploader.py`
+- Fix: `python3 -m black FleetGitOpsUploader.py`
+- Purpose: Consistent code formatting across the AutoPkg ecosystem
+
+### 2. Import Sorting (isort)
+- Run: `python3 -m isort --check-only --diff FleetGitOpsUploader.py`
+- Fix: `python3 -m isort FleetGitOpsUploader.py`
+- Purpose: Standardized import organization
+
+### 3. Flake8 with Bugbear
+- Run: `python3 -m flake8 FleetGitOpsUploader.py`
+- Purpose: Code quality, unused variables, style violations
+- Configuration: Uses `.flake8` file for project-specific settings
+
+**CRITICAL**: All three tools must pass without errors before any code can be contributed to AutoPkg repositories. This is a hard requirement of the AutoPkg project.
+
 ## Validation Scenarios
 
 ### After Making Code Changes
-- ALWAYS run `python3 -m py_compile FleetGitOpsUploader.py` to validate syntax
+- ALWAYS run AutoPkg code style requirements (required by AutoPkg project):
+  - `python3 -m py_compile FleetGitOpsUploader.py` -- validate syntax
+  - `python3 -m black --check --diff FleetGitOpsUploader.py` -- check formatting
+  - `python3 -m isort --check-only --diff FleetGitOpsUploader.py` -- check import sorting
+  - `python3 -m flake8 FleetGitOpsUploader.py` -- check linting with bugbear
 - Test YAML parsing: `python3 -c "import yaml; [yaml.safe_load(open(f)) for f in ['GoogleChrome.fleet.recipe.yaml', 'GithubDesktop.fleet.recipe.yaml']]"`
 - Validate Git operations work correctly
 - If modifying the processor, test with a sample recipe using autopkg (requires macOS)

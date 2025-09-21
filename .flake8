@@ -1,0 +1,11 @@
+[flake8]
+max-line-length = 88
+extend-ignore = 
+    # Allow slightly longer lines to match black's default
+    E501
+exclude = 
+    .git,
+    __pycache__,
+    .venv,
+    .eggs,
+    *.egg
