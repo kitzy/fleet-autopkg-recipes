@@ -23,12 +23,118 @@ Upload a freshly built installer to Fleet using the Software API, then create or
 
 ## Requirements
 
-- Python 3.9+
-- AutoPkg
-- `requests` and `PyYAML` Python packages
-- `git` CLI on PATH
-- GitHub token with `repo` scope if pushing to a different repo or if you need elevated permissions
-- Fleet server v4.70.0 or higher and API token with rights to upload software for the target team
+- **macOS**: Required for AutoPkg execution
+- **Python 3.9+**: For the FleetGitOpsUploader processor
+- **AutoPkg 2.7+**: For recipe processing
+- **Git**: For GitOps repository operations
+- **Fleet API Access**: Fleet server v4.70.0+ with software management permissions
+- **GitHub Access**: Personal access token with `repo` and `pull-requests` permissions
+
+## Installation
+
+### 1. Install AutoPkg
+
+AutoPkg is required and only works on macOS:
+
+```bash
+# Install via Homebrew (recommended)
+brew install autopkg
+
+# Verify installation
+autopkg version
+```
+
+### 2. Install Python Dependencies
+
+```bash
+# Install required Python packages
+python3 -m pip install --upgrade pip
+python3 -m pip install requests PyYAML
+```
+
+### 3. Add AutoPkg Repositories
+
+Configure the required AutoPkg recipe repositories:
+
+```bash
+# Add core AutoPkg recipes
+autopkg repo-add https://github.com/autopkg/recipes.git
+
+# Add Fleet AutoPkg recipes
+autopkg repo-add https://github.com/fleetdm/fleet-autopkg-recipes.git
+```
+
+### 4. Verify Installation
+
+Test that everything is working:
+
+```bash
+# Test Python dependencies
+python3 -c "import requests, yaml; print('✅ Dependencies OK')"
+
+# Test AutoPkg with Fleet recipes
+autopkg list-recipes | grep fleet
+
+# Validate a sample recipe
+autopkg verify-recipe Google/GoogleChrome.fleet.recipe.yaml
+```
+
+## Quick Start
+
+### 1. Set Up Environment Variables
+
+Create a shell script with your Fleet and GitHub configuration:
+
+```bash
+# Create fleet-env.sh
+cat > fleet-env.sh << 'EOF'
+#!/bin/bash
+
+# Fleet API Configuration
+export FLEET_API_BASE="https://your-fleet-server.com"
+export FLEET_API_TOKEN="your-fleet-api-token"
+export FLEET_TEAM_ID="1"
+
+# GitHub Configuration  
+export FLEET_GITOPS_REPO_URL="https://github.com/your-org/fleet-gitops"
+export FLEET_GITOPS_GITHUB_TOKEN="your-github-token"
+export FLEET_GITOPS_AUTHOR_EMAIL="autopkg-bot@your-org.com"
+
+# GitOps Configuration
+export FLEET_TEAM_YAML_PATH="teams/workstations.yml"
+
+EOF
+
+# Make executable and source
+chmod +x fleet-env.sh
+source fleet-env.sh
+```
+
+### 2. Test with a Simple Recipe
+
+Run a recipe to ensure everything works:
+
+```bash
+# Source your environment
+source fleet-env.sh
+
+# Run Google Chrome recipe (builds and uploads to Fleet)
+autopkg run Google/GoogleChrome.fleet.recipe.yaml -v
+
+# Check the output for successful upload and PR creation
+```
+
+### 3. Available Recipes
+
+This repository includes recipes for popular software:
+
+- **Browsers**: Google Chrome, Firefox
+- **Communication**: Slack, Zoom, Signal
+- **Development**: Visual Studio Code, GitHub Desktop, iTerm2
+- **Productivity**: Notion, 1Password
+- **Utilities**: Docker Desktop, Caffeine
+
+Run `autopkg list-recipes | grep fleet` to see all available recipes.
 
 ---
 
@@ -390,4 +496,4 @@ Yes. Modify `_write_or_update_package_yaml` if your GitOps runner expects differ
 
 ## License
 
-MIT. Add your organization and year.
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
