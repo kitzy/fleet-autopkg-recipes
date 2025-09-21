@@ -497,7 +497,7 @@ class FleetGitOpsUploader(Processor):
             return True
         return False
 
-    def _is_fleet_473_or_higher(self, fleet_version: str) -> bool:
+    def _is_fleet_474_or_higher(self, fleet_version: str) -> bool:
         """Check if Fleet version is 4.74.0 or higher (new YAML format)."""
         try:
             # Parse version string like "4.74.0" or "4.74.0-dev"
@@ -741,7 +741,7 @@ class FleetGitOpsUploader(Processor):
             pkg_block["hash_sha256"] = hash_sha256
 
         # Check if we're using the new format (>= 4.74.0)
-        is_new_format = self._is_fleet_473_or_higher(fleet_version)
+        is_new_format = self._is_fleet_474_or_higher(fleet_version)
 
         # Optional targeting and behavior - only for old format (< 4.74.0)
         # In new format, these go in team YAML software section
@@ -780,7 +780,7 @@ class FleetGitOpsUploader(Processor):
         """Ensure team YAML includes software.packages with the given ref_path.
         For Fleet >= 4.74.0, also add targeting metadata to the software section."""
         y = self._read_yaml(team_yaml_path)
-        is_new_format = self._is_fleet_473_or_higher(fleet_version)
+        is_new_format = self._is_fleet_474_or_higher(fleet_version)
 
         if "software" not in y or y["software"] is None:
             y["software"] = {}
