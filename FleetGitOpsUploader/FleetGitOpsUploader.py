@@ -343,7 +343,8 @@ class FleetGitOpsUploader(Processor):
         title_id = software_package.get("title_id")
         installer_id = software_package.get("installer_id")
         hash_sha256 = software_package.get("hash_sha256")
-        returned_version = software_package.get("version") or version
+        # Use our version, not Fleet's returned version which may be incorrect
+        returned_version = version
 
         # Prepare repo in a temp dir
         with tempfile.TemporaryDirectory() as tmpdir:
