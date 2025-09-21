@@ -1,0 +1,15 @@
+Description: 'Downloads latest Slack app and uploads to Fleet'
+Identifier: com.github.kitzy.fleet.Slack
+Input:
+  NAME: Slack
+MinimumVersion: '2.0'
+ParentRecipe: com.github.autopkg.homebysix-recipes/nebula.pkg.recipe
+Process:
+- Arguments:
+    fleet_api_token: '%FLEET_API_TOKEN%'
+    fleet_base_url: '%FLEET_BASE_URL%'
+    gitops_github_token: '%FLEET_GITOPS_GITHUB_TOKEN%'
+    gitops_repo_url: '%FLEET_GITOPS_REPO_URL%'
+    gitops_teams: '%FLEET_GITOPS_TEAMS%'
+    bundle_identifier: '%FLEET_BUNDLE_IDENTIFIER%'
+  Processor: com.github.kitzy.FleetGitOpsUploader/FleetGitOpsUploader
