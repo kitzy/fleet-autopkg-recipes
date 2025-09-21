@@ -48,24 +48,13 @@ All recipe arguments use environment variables for maximum flexibility. The proc
 
 **Required Environment Variables:**
 ```bash
-export FLEET_API_BASE="https://fleet.myorg.com"
-export FLEET_API_TOKEN="your-fleet-token"
-export FLEET_TEAM_ID="1"
-export FLEET_GITOPS_REPO_URL="https://github.com/myorg/fleet-gitops"
-export FLEET_GITOPS_GITHUB_TOKEN="your-github-token"
-export FLEET_GITOPS_AUTHOR_EMAIL="autopkg-bot@myorg.com"
-export FLEET_TEAM_YAML_PATH="teams/workstations.yml"
-```
-
-**Usage:**
-```bash
-# Set required variables once
-source your-fleet-env.sh
-
-# Run any recipe directly - no overrides needed!
-autopkg run GoogleChrome.fleet.recipe.yaml
-autopkg run Caffeine.fleet.recipe.yaml
-autopkg run GithubDesktop.fleet.recipe.yaml
+FLEET_API_BASE="https://fleet.myorg.com"
+FLEET_API_TOKEN="your-fleet-token"
+FLEET_TEAM_ID="1"
+FLEET_GITOPS_REPO_URL="https://github.com/myorg/fleet-gitops"
+FLEET_GITOPS_GITHUB_TOKEN="your-github-token"
+FLEET_GITOPS_AUTHOR_EMAIL="autopkg-bot@myorg.com"
+FLEET_TEAM_YAML_PATH="teams/workstations.yml"
 ```
 
 ### Argument Order Convention
