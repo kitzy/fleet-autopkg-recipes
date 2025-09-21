@@ -23,12 +23,69 @@ Upload a freshly built installer to Fleet using the Software API, then create or
 
 ## Requirements
 
-- Python 3.9+
-- AutoPkg
-- `requests` and `PyYAML` Python packages
-- `git` CLI on PATH
-- GitHub token with `repo` scope if pushing to a different repo or if you need elevated permissions
-- Fleet server v4.70.0 or higher and API token with rights to upload software for the target team
+- **macOS**: Required for AutoPkg execution
+- **Python 3.9+**: For the FleetGitOpsUploader processor
+- **AutoPkg 2.7+**: For recipe processing
+- **Git**: For GitOps repository operations
+- **Fleet API Access**: Fleet server v4.70.0+ with software management permissions
+- **GitHub Access**: Personal access token with `repo` and `pull-requests` permissions
+
+## Quick Start
+
+### 1. Set Up Environment Variables
+
+Create a shell script with your Fleet and GitHub configuration:
+
+```bash
+# Create fleet-env.sh
+cat > fleet-env.sh << 'EOF'
+#!/bin/bash
+
+# Fleet API Configuration
+export FLEET_API_BASE="https://your-fleet-server.com"
+export FLEET_API_TOKEN="your-fleet-api-token"
+export FLEET_TEAM_ID="1"
+
+# GitHub Configuration  
+export FLEET_GITOPS_REPO_URL="https://github.com/your-org/fleet-gitops"
+export FLEET_GITOPS_GITHUB_TOKEN="your-github-token"
+export FLEET_GITOPS_AUTHOR_EMAIL="autopkg-bot@your-org.com"
+
+# GitOps Configuration
+export FLEET_TEAM_YAML_PATH="teams/workstations.yml"
+
+EOF
+
+# Make executable and source
+chmod +x fleet-env.sh
+source fleet-env.sh
+```
+
+### 2. Test with a Simple Recipe
+
+Run a recipe to ensure everything works:
+
+```bash
+# Source your environment
+source fleet-env.sh
+
+# Run Google Chrome recipe (builds and uploads to Fleet)
+autopkg run Google/GoogleChrome.fleet.recipe.yaml -v
+
+# Check the output for successful upload and PR creation
+```
+
+### 3. Available Recipes
+
+This repository includes recipes for popular software:
+
+- **Browsers**: Google Chrome, Firefox
+- **Communication**: Slack, Zoom, Signal
+- **Development**: Visual Studio Code, GitHub Desktop, iTerm2
+- **Productivity**: Notion, 1Password
+- **Utilities**: Docker Desktop, Caffeine
+
+Run `autopkg list-recipes | grep fleet` to see all available recipes.
 
 ---
 
@@ -128,7 +185,7 @@ All inputs can be provided as AutoPkg variables in your recipe or via `-k` overr
 | `team_yaml_path` | Yes | str | Path to team YAML in repo, for example `teams/workstations.yml`. |
 | `github_repo` | Yes | str | `owner/repo` for PR creation. |
 | `platform` | No | str | Defaults to `darwin`. Accepts `darwin`, `windows`, `linux`, `ios`, `ipados`. |
-| `self_service` | No | bool | Make available in self service. Default `false`. |
+| `self_service` | No | bool | Make available in self service. Default `true`. |
 | `automatic_install` | No | bool | On macOS, create automatic install policy. Default `false`. |
 | `labels_include_any` | No | list[str] | Labels required for targeting. Only one of include or exclude may be set. |
 | `labels_exclude_any` | No | list[str] | Labels to exclude from targeting. |
@@ -140,7 +197,7 @@ All inputs can be provided as AutoPkg variables in your recipe or via `-k` overr
 | `git_author_name` | No | str | Commit author name. Default `autopkg-bot`. |
 | `git_author_email` | No | str | Commit author email. Default `autopkg-bot@example.com`. |
 | `software_dir` | No | str | Directory for per title YAML. Default `lib/macos/software`. |
-| `package_yaml_suffix` | No | str | Suffix for per title YAML. Default `.package.yml`. |
+| `package_yaml_suffix` | No | str | Suffix for per title YAML. Default `.yml`. |
 | `team_yaml_package_path_prefix` | No | str | Path prefix used inside team YAML. Default `../lib/macos/software/`. |
 | `github_token` | No | str | GitHub token. If empty, uses `FLEET_GITOPS_GITHUB_TOKEN` env. When set, the processor rewrites the repo URL with the token so `git clone` and `git push` authenticate without prompts. |
 | `pr_labels` | No | list[str] | Labels to set on the PR. |
@@ -183,7 +240,7 @@ Fleet v4.74.0 introduces breaking changes to the software YAML format. The proce
 
 ### Per title software YAML
 
-Created or updated at `<repo>/<software_dir>/<software_slug><package_yaml_suffix>`, for example `lib/macos/software/firefox.package.yml`.
+Created or updated at `<repo>/<software_dir>/<software_slug><package_yaml_suffix>`, for example `lib/macos/software/firefox.yml`.
 
 **Fleet < 4.74.0 Structure:**
 
@@ -261,44 +318,37 @@ software:
 
 ## Example AutoPkg Recipe Integration
 
-Add the processor after your build step. Example excerpt:
+Add the processor after your build step. Example excerpt from a YAML recipe:
 
-```xml
-<dict>
-  <key>Process</key>
-  <array>
-    <!-- your existing build processors here -->
-    <dict>
-      <key>Processor</key>
-      <string>com.github.yourorg.processors/FleetGitOpsUploader</string>
-      <key>Arguments</key>
-      <dict>
-        <key>pkg_path</key><string>%pathname%</string>
-        <key>software_title</key><string>%NAME%</string>
-        <key>version</key><string>%version%</string>
-
-        <key>fleet_api_base</key><string>https://fleet.example.com</string>
-        <key>fleet_api_token</key><string>%FLEET_API_TOKEN%</string>
-        <key>team_id</key><string>1</string>
-
-        <key>self_service</key><true/>
-        <key>labels_include_any</key>
-        <array><string>Workstations</string></array>
-
-        <key>git_repo_url</key><string>https://github.com/kitzy/fleet-gitops.git</string>
-        <key>git_base_branch</key><string>main</string>
-        <key>team_yaml_path</key><string>teams/workstations.yml</string>
-        <key>software_dir</key><string>lib/macos/software</string>
-        <key>team_yaml_package_path_prefix</key><string>../lib/macos/software/</string>
-
-        <key>github_repo</key><string>kitzy/fleet-gitops</string>
-        <key>github_token</key><string>%FLEET_GITOPS_GITHUB_TOKEN%</string>
-
-        <key>branch_prefix</key><string>autopkg</string>
-      </dict>
-    </dict>
-  </array>
-</dict>
+```yaml
+Process:
+- Arguments:
+    # Parent recipe requirements
+    pkg_path: '%pkg_path%'
+    
+    # Core package info (from parent recipe)
+    software_title: '%NAME%'
+    version: '%version%'
+    
+    # Fleet API configuration
+    fleet_api_base: '%FLEET_API_BASE%'
+    fleet_api_token: '%FLEET_API_TOKEN%'
+    team_id: '%FLEET_TEAM_ID%'
+    
+    # Software configuration
+    self_service: true
+    
+    # Git/GitHub configuration
+    git_repo_url: '%FLEET_GITOPS_REPO_URL%'
+    github_token: '%FLEET_GITOPS_GITHUB_TOKEN%'
+    
+    # GitOps file paths
+    team_yaml_path: '%FLEET_TEAM_YAML_PATH%'
+    
+    # Optional features
+    skip_pkg_upload: false
+    verbose_mode: true
+  Processor: FleetGitOpsUploader
 ```
 
 ---
@@ -341,20 +391,8 @@ Add the processor after your build step. Example excerpt:
 
 ---
 
-## Local Testing
-
-You can run the processor outside Actions to validate behavior.
-
-1. Create a temporary directory and clone your GitOps repo.
-2. Export `FLEET_GITOPS_GITHUB_TOKEN` and `FLEET_API_TOKEN`.
-3. Run your recipe with `autopkg run` and override variables with `-k` as needed.
-4. Inspect the created branch and YAML changes before opening a PR.
-
----
-
 ## Security Notes
 
-- Avoid echoing tokens in logs. The example Actions job relies on environment variables and never prints secrets.
 - When a GitHub token is provided, the processor rewrites the Git repository URL with the token so that cloning and pushing use authenticated HTTPS URLs without prompts. `GIT_TERMINAL_PROMPT` is set to `0` to prevent interactive authentication.
 - Consider scoping the GitHub token to the target repo only.
 - Rotate the Fleet API token periodically.
@@ -371,17 +409,11 @@ You can run the processor outside Actions to validate behavior.
 
 ## FAQ
 
-**Q: Can this handle Windows or Linux packages?**  
-Yes. Set `platform` accordingly and provide the appropriate installer. For non `.pkg` installers you will likely need `install_script` and `uninstall_script`.
-
 **Q: Can it skip creating a PR and push directly to main?**  
 Branch and PR is deliberate. If you want direct commits, you can set the base and head to the same branch and adjust the code. That is not recommended for audited changes.
 
-**Q: What about labels or categories management?**  
+**Q: What about label management?**  
 This processor assumes labels already exist in GitOps. Managing label creation is out of scope to keep changes atomic and reviewable.
-
-**Q: Can I change the YAML schema it writes?**  
-Yes. Modify `_write_or_update_package_yaml` if your GitOps runner expects different keys or nesting. The defaults match a common custom package pattern.
 
 ---
 
@@ -397,4 +429,4 @@ Yes. Modify `_write_or_update_package_yaml` if your GitOps runner expects differ
 
 ## License
 
-MIT. Add your organization and year.
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.

@@ -99,7 +99,7 @@ AutoPkg recipes follow this pattern:
 Example recipe structure:
 ```yaml
 Description: 'Builds [Software].pkg and uploads to Fleet'
-Identifier: com.github.kitzy.fleet.SoftwareName
+Identifier: com.github.yourorg.fleet.SoftwareName
 Input:
   NAME: Software Name
 MinimumVersion: '2.0'
