@@ -27,22 +27,29 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install requests PyYAML pylint black isort mypy
+        pip install requests PyYAML pylint black isort mypy flake8 flake8-bugbear
         
     - name: Validate Python syntax
       run: |
         python -m py_compile FleetGitOpsUploader/FleetGitOpsUploader.py
         echo "✅ Python syntax validation passed"
         
-    - name: Check code formatting with black
+    - name: Check AutoPkg code style requirements
       run: |
+        echo "=== AutoPkg Code Style Validation ==="
+        echo "Checking black formatting..."
         black --check --diff FleetGitOpsUploader/FleetGitOpsUploader.py
-        echo "✅ Code formatting check passed"
+        echo "✅ Black formatting check passed"
         
-    - name: Check import sorting with isort
-      run: |
+        echo "Checking import sorting with isort..."
         isort --check-only --diff FleetGitOpsUploader/FleetGitOpsUploader.py
         echo "✅ Import sorting check passed"
+        
+        echo "Checking flake8 with bugbear..."
+        flake8 FleetGitOpsUploader/FleetGitOpsUploader.py
+        echo "✅ Flake8 + bugbear check passed"
+        
+        echo "🎉 All AutoPkg code style requirements met!"
         
     - name: Run pylint
       run: |
