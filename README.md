@@ -128,7 +128,7 @@ All inputs can be provided as AutoPkg variables in your recipe or via `-k` overr
 | `team_yaml_path` | Yes | str | Path to team YAML in repo, for example `teams/workstations.yml`. |
 | `github_repo` | Yes | str | `owner/repo` for PR creation. |
 | `platform` | No | str | Defaults to `darwin`. Accepts `darwin`, `windows`, `linux`, `ios`, `ipados`. |
-| `self_service` | No | bool | Make available in self service. Default `false`. |
+| `self_service` | No | bool | Make available in self service. Default `true`. |
 | `automatic_install` | No | bool | On macOS, create automatic install policy. Default `false`. |
 | `labels_include_any` | No | list[str] | Labels required for targeting. Only one of include or exclude may be set. |
 | `labels_exclude_any` | No | list[str] | Labels to exclude from targeting. |
@@ -140,7 +140,7 @@ All inputs can be provided as AutoPkg variables in your recipe or via `-k` overr
 | `git_author_name` | No | str | Commit author name. Default `autopkg-bot`. |
 | `git_author_email` | No | str | Commit author email. Default `autopkg-bot@example.com`. |
 | `software_dir` | No | str | Directory for per title YAML. Default `lib/macos/software`. |
-| `package_yaml_suffix` | No | str | Suffix for per title YAML. Default `.package.yml`. |
+| `package_yaml_suffix` | No | str | Suffix for per title YAML. Default `.yml`. |
 | `team_yaml_package_path_prefix` | No | str | Path prefix used inside team YAML. Default `../lib/macos/software/`. |
 | `github_token` | No | str | GitHub token. If empty, uses `FLEET_GITOPS_GITHUB_TOKEN` env. When set, the processor rewrites the repo URL with the token so `git clone` and `git push` authenticate without prompts. |
 | `pr_labels` | No | list[str] | Labels to set on the PR. |
@@ -183,7 +183,7 @@ Fleet v4.74.0 introduces breaking changes to the software YAML format. The proce
 
 ### Per title software YAML
 
-Created or updated at `<repo>/<software_dir>/<software_slug><package_yaml_suffix>`, for example `lib/macos/software/firefox.package.yml`.
+Created or updated at `<repo>/<software_dir>/<software_slug><package_yaml_suffix>`, for example `lib/macos/software/firefox.yml`.
 
 **Fleet < 4.74.0 Structure:**
 
@@ -261,44 +261,37 @@ software:
 
 ## Example AutoPkg Recipe Integration
 
-Add the processor after your build step. Example excerpt:
+Add the processor after your build step. Example excerpt from a YAML recipe:
 
-```xml
-<dict>
-  <key>Process</key>
-  <array>
-    <!-- your existing build processors here -->
-    <dict>
-      <key>Processor</key>
-      <string>com.github.yourorg.processors/FleetGitOpsUploader</string>
-      <key>Arguments</key>
-      <dict>
-        <key>pkg_path</key><string>%pathname%</string>
-        <key>software_title</key><string>%NAME%</string>
-        <key>version</key><string>%version%</string>
-
-        <key>fleet_api_base</key><string>https://fleet.example.com</string>
-        <key>fleet_api_token</key><string>%FLEET_API_TOKEN%</string>
-        <key>team_id</key><string>1</string>
-
-        <key>self_service</key><true/>
-        <key>labels_include_any</key>
-        <array><string>Workstations</string></array>
-
-        <key>git_repo_url</key><string>https://github.com/kitzy/fleet-gitops.git</string>
-        <key>git_base_branch</key><string>main</string>
-        <key>team_yaml_path</key><string>teams/workstations.yml</string>
-        <key>software_dir</key><string>lib/macos/software</string>
-        <key>team_yaml_package_path_prefix</key><string>../lib/macos/software/</string>
-
-        <key>github_repo</key><string>kitzy/fleet-gitops</string>
-        <key>github_token</key><string>%FLEET_GITOPS_GITHUB_TOKEN%</string>
-
-        <key>branch_prefix</key><string>autopkg</string>
-      </dict>
-    </dict>
-  </array>
-</dict>
+```yaml
+Process:
+- Arguments:
+    # Parent recipe requirements
+    pkg_path: '%pkg_path%'
+    
+    # Core package info (from parent recipe)
+    software_title: '%NAME%'
+    version: '%version%'
+    
+    # Fleet API configuration
+    fleet_api_base: '%FLEET_API_BASE%'
+    fleet_api_token: '%FLEET_API_TOKEN%'
+    team_id: '%FLEET_TEAM_ID%'
+    
+    # Software configuration
+    self_service: true
+    
+    # Git/GitHub configuration
+    git_repo_url: '%FLEET_GITOPS_REPO_URL%'
+    github_token: '%FLEET_GITOPS_GITHUB_TOKEN%'
+    
+    # GitOps file paths
+    team_yaml_path: '%FLEET_TEAM_YAML_PATH%'
+    
+    # Optional features
+    skip_pkg_upload: false
+    verbose_mode: true
+  Processor: FleetGitOpsUploader
 ```
 
 ---
