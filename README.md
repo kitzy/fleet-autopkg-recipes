@@ -150,18 +150,18 @@ All inputs can be provided as AutoPkg variables in your recipe or via `-k` overr
 
 ---
 
-## Fleet v4.73.0 Breaking Changes
+## Fleet v4.74.0 Breaking Changes
 
-Fleet v4.73.0 introduces breaking changes to the software YAML format. The processor automatically detects the Fleet server version via the `/api/v1/fleet/version` endpoint and adapts the YAML format accordingly:
+Fleet v4.74.0 introduces breaking changes to the software YAML format. The processor automatically detects the Fleet server version via the `/api/v1/fleet/version` endpoint and adapts the YAML format accordingly:
 
-**Fleet < 4.73.0 (Old Format):**
+**Fleet < 4.74.0 (Old Format):**
 - `self_service`, `labels_include_any`, `labels_exclude_any` are stored in individual package YAML files
 - Compatible with existing Fleet deployments
 
-**Fleet >= 4.73.0 (New Format):**
+**Fleet >= 4.74.0 (New Format):**
 - `self_service`, `labels_include_any`, `labels_exclude_any` are moved to team YAML software section
 - Package YAML files contain only core metadata (name, version, platform, hash, scripts)
-- Automatically detected and applied when connecting to Fleet v4.73.0+ servers
+- Automatically detected and applied when connecting to Fleet v4.74.0+ servers
 
 **Note:** If the version query fails, the processor defaults to the new format for modern Fleet deployments.
 
@@ -185,7 +185,7 @@ Fleet v4.73.0 introduces breaking changes to the software YAML format. The proce
 
 Created or updated at `<repo>/<software_dir>/<software_slug><package_yaml_suffix>`, for example `lib/macos/software/firefox.package.yml`.
 
-**Fleet < 4.73.0 Structure:**
+**Fleet < 4.74.0 Structure:**
 
 ```yaml
 name: "Firefox"
@@ -212,7 +212,7 @@ post_install_script:             # optional
     echo "post"
 ```
 
-**Fleet >= 4.73.0 Structure:**
+**Fleet >= 4.74.0 Structure:**
 
 ```yaml
 name: "Firefox"
@@ -238,7 +238,7 @@ post_install_script:             # optional
 
 ### Team YAML update
 
-**Fleet < 4.73.0:** Simple package reference in `teams/workstations.yml`:
+**Fleet < 4.74.0:** Simple package reference in `teams/workstations.yml`:
 
 ```yaml
 software:
@@ -246,7 +246,7 @@ software:
     - path: ../lib/macos/software/firefox.package.yml
 ```
 
-**Fleet >= 4.73.0:** Package reference with targeting metadata in `teams/workstations.yml`:
+**Fleet >= 4.74.0:** Package reference with targeting metadata in `teams/workstations.yml`:
 
 ```yaml
 software:

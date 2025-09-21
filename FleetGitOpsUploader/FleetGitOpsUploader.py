@@ -498,20 +498,20 @@ class FleetGitOpsUploader(Processor):
         return False
 
     def _is_fleet_473_or_higher(self, fleet_version: str) -> bool:
-        """Check if Fleet version is 4.73.0 or higher (new YAML format)."""
+        """Check if Fleet version is 4.74.0 or higher (new YAML format)."""
         try:
-            # Parse version string like "4.73.0" or "4.73.0-dev"
+            # Parse version string like "4.74.0" or "4.74.0-dev"
             version_parts = fleet_version.split("-")[0].split(".")
             major = int(version_parts[0])
             minor = int(version_parts[1])
             patch = int(version_parts[2]) if len(version_parts) > 2 else 0
 
-            # Check if >= 4.73.0
+            # Check if >= 4.74.0
             if major > 4:
                 return True
-            elif major == 4 and minor > 73:
+            elif major == 4 and minor > 74:
                 return True
-            elif major == 4 and minor == 73 and patch >= 0:
+            elif major == 4 and minor == 74 and patch >= 0:
                 return True
             return False
         except (ValueError, IndexError):
@@ -540,8 +540,8 @@ class FleetGitOpsUploader(Processor):
     def _get_fleet_version(self, fleet_api_base: str, fleet_token: str) -> str:
         """Query Fleet API to get the server version.
 
-        Returns the semantic version string (e.g., "4.73.0").
-        If the query fails, defaults to "4.73.0" (new format) assuming a modern deployment.
+        Returns the semantic version string (e.g., "4.74.0").
+        If the query fails, defaults to "4.74.0" (new format) assuming a modern deployment.
         """
         try:
             url = f"{fleet_api_base}/api/v1/fleet/version"
@@ -556,7 +556,7 @@ class FleetGitOpsUploader(Processor):
                     data = json.loads(resp.read().decode())
                     version = data.get("version", "")
                     if version:
-                        # Parse version string like "4.73.0-dev" or "4.73.0"
+                        # Parse version string like "4.74.0-dev" or "4.74.0"
                         # Extract just the semantic version part
                         return version.split("-")[0]
 
@@ -570,7 +570,7 @@ class FleetGitOpsUploader(Processor):
             pass
 
         # Default to new format version if query fails (assume modern Fleet deployment)
-        return "4.73.0"
+        return "4.74.0"
 
     @staticmethod
     def _pr_body(
@@ -723,8 +723,8 @@ class FleetGitOpsUploader(Processor):
         """
         We store the package metadata in a YAML the GitOps worker can apply.
         Format automatically determined by querying Fleet API version:
-        - Fleet < 4.73.0: targeting keys go in package files
-        - Fleet >= 4.73.0: targeting keys go in team YAML software section
+        - Fleet < 4.74.0: targeting keys go in package files
+        - Fleet >= 4.74.0: targeting keys go in team YAML software section
         """
         data = self._read_yaml(pkg_yaml_path)
 
@@ -740,10 +740,10 @@ class FleetGitOpsUploader(Processor):
         if hash_sha256:
             pkg_block["hash_sha256"] = hash_sha256
 
-        # Check if we're using the new format (>= 4.73.0)
+        # Check if we're using the new format (>= 4.74.0)
         is_new_format = self._is_fleet_473_or_higher(fleet_version)
 
-        # Optional targeting and behavior - only for old format (< 4.73.0)
+        # Optional targeting and behavior - only for old format (< 4.74.0)
         # In new format, these go in team YAML software section
         if not is_new_format:
             if self_service:
@@ -778,7 +778,7 @@ class FleetGitOpsUploader(Processor):
         labels_exclude_any: list[str],
     ) -> bool:
         """Ensure team YAML includes software.packages with the given ref_path.
-        For Fleet >= 4.73.0, also add targeting metadata to the software section."""
+        For Fleet >= 4.74.0, also add targeting metadata to the software section."""
         y = self._read_yaml(team_yaml_path)
         is_new_format = self._is_fleet_473_or_higher(fleet_version)
 
@@ -805,7 +805,7 @@ class FleetGitOpsUploader(Processor):
         if ref_path not in existing:
             pkg_entry = {"path": ref_path}
 
-            # For new format (>= 4.73.0), add targeting metadata to package entry
+            # For new format (>= 4.74.0), add targeting metadata to package entry
             if is_new_format:
                 if self_service:
                     pkg_entry["self_service"] = True
