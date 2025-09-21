@@ -30,55 +30,6 @@ Upload a freshly built installer to Fleet using the Software API, then create or
 - **Fleet API Access**: Fleet server v4.70.0+ with software management permissions
 - **GitHub Access**: Personal access token with `repo` and `pull-requests` permissions
 
-## Installation
-
-### 1. Install AutoPkg
-
-AutoPkg is required and only works on macOS:
-
-```bash
-# Install via Homebrew (recommended)
-brew install autopkg
-
-# Verify installation
-autopkg version
-```
-
-### 2. Install Python Dependencies
-
-```bash
-# Install required Python packages
-python3 -m pip install --upgrade pip
-python3 -m pip install requests PyYAML
-```
-
-### 3. Add AutoPkg Repositories
-
-Configure the required AutoPkg recipe repositories:
-
-```bash
-# Add core AutoPkg recipes
-autopkg repo-add https://github.com/autopkg/recipes.git
-
-# Add Fleet AutoPkg recipes
-autopkg repo-add https://github.com/fleetdm/fleet-autopkg-recipes.git
-```
-
-### 4. Verify Installation
-
-Test that everything is working:
-
-```bash
-# Test Python dependencies
-python3 -c "import requests, yaml; print('✅ Dependencies OK')"
-
-# Test AutoPkg with Fleet recipes
-autopkg list-recipes | grep fleet
-
-# Validate a sample recipe
-autopkg verify-recipe Google/GoogleChrome.fleet.recipe.yaml
-```
-
 ## Quick Start
 
 ### 1. Set Up Environment Variables
@@ -440,20 +391,8 @@ Process:
 
 ---
 
-## Local Testing
-
-You can run the processor outside Actions to validate behavior.
-
-1. Create a temporary directory and clone your GitOps repo.
-2. Export `FLEET_GITOPS_GITHUB_TOKEN` and `FLEET_API_TOKEN`.
-3. Run your recipe with `autopkg run` and override variables with `-k` as needed.
-4. Inspect the created branch and YAML changes before opening a PR.
-
----
-
 ## Security Notes
 
-- Avoid echoing tokens in logs. The example Actions job relies on environment variables and never prints secrets.
 - When a GitHub token is provided, the processor rewrites the Git repository URL with the token so that cloning and pushing use authenticated HTTPS URLs without prompts. `GIT_TERMINAL_PROMPT` is set to `0` to prevent interactive authentication.
 - Consider scoping the GitHub token to the target repo only.
 - Rotate the Fleet API token periodically.
@@ -470,17 +409,11 @@ You can run the processor outside Actions to validate behavior.
 
 ## FAQ
 
-**Q: Can this handle Windows or Linux packages?**  
-Yes. Set `platform` accordingly and provide the appropriate installer. For non `.pkg` installers you will likely need `install_script` and `uninstall_script`.
-
 **Q: Can it skip creating a PR and push directly to main?**  
 Branch and PR is deliberate. If you want direct commits, you can set the base and head to the same branch and adjust the code. That is not recommended for audited changes.
 
-**Q: What about labels or categories management?**  
+**Q: What about label management?**  
 This processor assumes labels already exist in GitOps. Managing label creation is out of scope to keep changes atomic and reviewable.
-
-**Q: Can I change the YAML schema it writes?**  
-Yes. Modify `_write_or_update_package_yaml` if your GitOps runner expects different keys or nesting. The defaults match a common custom package pattern.
 
 ---
 
