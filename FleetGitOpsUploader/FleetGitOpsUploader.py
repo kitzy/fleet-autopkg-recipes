@@ -18,7 +18,6 @@ import re
 import shutil
 import subprocess
 import tempfile
-from datetime import datetime
 from pathlib import Path
 
 try:
@@ -31,6 +30,28 @@ import urllib.parse
 import urllib.request
 
 from autopkglib import Processor, ProcessorError
+
+# Constants for improved readability
+DEFAULT_PLATFORM = "darwin"
+DEFAULT_SOFTWARE_DIR = "lib/macos/software" 
+DEFAULT_PACKAGE_YAML_SUFFIX = ".yml"
+DEFAULT_TEAM_YAML_PREFIX = "../lib/macos/software/"
+DEFAULT_GIT_BASE_BRANCH = "main"
+DEFAULT_GIT_AUTHOR_NAME = "autopkg-bot"
+DEFAULT_GIT_AUTHOR_EMAIL = "autopkg-bot@example.com"
+DEFAULT_BRANCH_PREFIX = "autopkg"
+DEFAULT_PR_LABELS = ["autopkg"]
+
+# Fleet version constants
+FLEET_MINIMUM_VERSION = "4.70.0"
+FLEET_NEW_FORMAT_VERSION = "4.74.0"
+
+# HTTP timeout constants (in seconds)
+FLEET_VERSION_TIMEOUT = 30
+FLEET_UPLOAD_TIMEOUT = 900  # 15 minutes for large packages
+GITHUB_API_TIMEOUT = 60
+GITHUB_LABEL_TIMEOUT = 30
+GITHUB_REVIEWER_TIMEOUT = 30
 
 
 class FleetGitOpsUploader(Processor):
@@ -53,7 +74,7 @@ class FleetGitOpsUploader(Processor):
         },
         "platform": {
             "required": False,
-            "default": "darwin",
+            "default": DEFAULT_PLATFORM,
             "description": "Platform hint for YAML (darwin|windows|linux|ios|ipados).",
         },
         # --- Fleet API ---
@@ -117,17 +138,17 @@ class FleetGitOpsUploader(Processor):
         },
         "git_base_branch": {
             "required": False,
-            "default": "main",
+            "default": DEFAULT_GIT_BASE_BRANCH,
             "description": "The base branch to branch from and target in PRs.",
         },
         "git_author_name": {
             "required": False,
-            "default": "autopkg-bot",
+            "default": DEFAULT_GIT_AUTHOR_NAME,
             "description": "Commit author name.",
         },
         "git_author_email": {
             "required": False,
-            "default": "autopkg-bot@example.com",
+            "default": DEFAULT_GIT_AUTHOR_EMAIL,
             "description": "Commit author email.",
         },
         # Pathing inside repo
@@ -137,17 +158,17 @@ class FleetGitOpsUploader(Processor):
         },
         "software_dir": {
             "required": False,
-            "default": "lib/macos/software",
+            "default": DEFAULT_SOFTWARE_DIR,
             "description": "Directory for per-software YAML files relative to repo root.",
         },
         "package_yaml_suffix": {
             "required": False,
-            "default": ".yml",
+            "default": DEFAULT_PACKAGE_YAML_SUFFIX,
             "description": "Suffix for package YAML files.",
         },
         "team_yaml_package_path_prefix": {
             "required": False,
-            "default": "../lib/macos/software/",
+            "default": DEFAULT_TEAM_YAML_PREFIX,
             "description": "Prefix used in team YAML when referencing package YAML paths.",
         },
         # GitHub PR
@@ -165,7 +186,7 @@ class FleetGitOpsUploader(Processor):
         },
         "pr_labels": {
             "required": False,
-            "default": ["autopkg"],
+            "default": DEFAULT_PR_LABELS,
             "description": "List of GitHub PR labels to apply.",
         },
         "PR_REVIEWER": {
@@ -181,7 +202,7 @@ class FleetGitOpsUploader(Processor):
         },
         "branch_prefix": {
             "required": False,
-            "default": "autopkg",
+            "default": DEFAULT_BRANCH_PREFIX,
             "description": "Optional prefix for branch names.",
         },
     }
@@ -236,7 +257,7 @@ class FleetGitOpsUploader(Processor):
 
         software_title = self.env["software_title"].strip()
         version = self.env["version"].strip()
-        platform = self.env.get("platform", "darwin")
+        platform = self.env.get("platform", DEFAULT_PLATFORM)
 
         fleet_api_base = self.env["fleet_api_base"].rstrip("/")
         fleet_token = self.env["fleet_api_token"]
@@ -254,14 +275,14 @@ class FleetGitOpsUploader(Processor):
 
         # Git / GitHub
         git_repo_url = self.env["git_repo_url"]
-        git_base_branch = self.env.get("git_base_branch", "main")
-        author_name = self.env.get("git_author_name", "autopkg-bot")
-        author_email = self.env.get("git_author_email", "autopkg-bot@example.com")
+        git_base_branch = self.env.get("git_base_branch", DEFAULT_GIT_BASE_BRANCH)
+        author_name = self.env.get("git_author_name", DEFAULT_GIT_AUTHOR_NAME)
+        author_email = self.env.get("git_author_email", DEFAULT_GIT_AUTHOR_EMAIL)
         team_yaml_path = self.env["team_yaml_path"]
-        software_dir = self.env.get("software_dir", "lib/macos/software")
-        package_yaml_suffix = self.env.get("package_yaml_suffix", ".package.yml")
+        software_dir = self.env.get("software_dir", DEFAULT_SOFTWARE_DIR)
+        package_yaml_suffix = self.env.get("package_yaml_suffix", DEFAULT_PACKAGE_YAML_SUFFIX)
         team_yaml_prefix = self.env.get(
-            "team_yaml_package_path_prefix", "../lib/macos/software/"
+            "team_yaml_package_path_prefix", DEFAULT_TEAM_YAML_PREFIX
         )
         github_repo = self.env.get("github_repo") or self._derive_github_repo(
             git_repo_url
@@ -299,7 +320,7 @@ class FleetGitOpsUploader(Processor):
         if not self._is_fleet_minimum_supported(fleet_version):
             raise ProcessorError(
                 f"Fleet version {fleet_version} is not supported. "
-                f"This processor requires Fleet v4.70.0 or higher. "
+                f"This processor requires Fleet v{FLEET_MINIMUM_VERSION} or higher. "
                 f"Please upgrade your Fleet server to a supported version."
             )
 
@@ -503,12 +524,18 @@ class FleetGitOpsUploader(Processor):
             minor = int(version_parts[1])
             patch = int(version_parts[2]) if len(version_parts) > 2 else 0
 
-            # Check if >= 4.74.0
-            if major > 4:
+            # Parse target version from constant
+            target_parts = FLEET_NEW_FORMAT_VERSION.split(".")
+            target_major = int(target_parts[0])
+            target_minor = int(target_parts[1])
+            target_patch = int(target_parts[2]) if len(target_parts) > 2 else 0
+
+            # Check if >= target version
+            if major > target_major:
                 return True
-            elif major == 4 and minor > 74:
+            elif major == target_major and minor > target_minor:
                 return True
-            elif major == 4 and minor == 74 and patch >= 0:
+            elif major == target_major and minor == target_minor and patch >= target_patch:
                 return True
             return False
         except (ValueError, IndexError):
@@ -516,7 +543,7 @@ class FleetGitOpsUploader(Processor):
             return False
 
     def _is_fleet_minimum_supported(self, fleet_version: str) -> bool:
-        """Check if Fleet version meets minimum requirements (>= 4.70.0)."""
+        """Check if Fleet version meets minimum requirements."""
         try:
             # Parse version string like "4.70.0" or "4.70.0-dev"
             version_parts = fleet_version.split("-")[0].split(".")
@@ -524,10 +551,18 @@ class FleetGitOpsUploader(Processor):
             minor = int(version_parts[1])
             patch = int(version_parts[2]) if len(version_parts) > 2 else 0
 
-            # Check if >= 4.70.0
-            if major > 4:
+            # Parse minimum version from constant
+            min_parts = FLEET_MINIMUM_VERSION.split(".")
+            min_major = int(min_parts[0])
+            min_minor = int(min_parts[1])
+            min_patch = int(min_parts[2]) if len(min_parts) > 2 else 0
+
+            # Check if >= minimum version
+            if major > min_major:
                 return True
-            elif major == 4 and minor >= 70:
+            elif major == min_major and minor > min_minor:
+                return True
+            elif major == min_major and minor == min_minor and patch >= min_patch:
                 return True
             return False
         except (ValueError, IndexError):
@@ -548,7 +583,7 @@ class FleetGitOpsUploader(Processor):
             }
             req = urllib.request.Request(url, headers=headers)
 
-            with urllib.request.urlopen(req, timeout=30) as resp:
+            with urllib.request.urlopen(req, timeout=FLEET_VERSION_TIMEOUT) as resp:
                 if resp.getcode() == 200:
                     data = json.loads(resp.read().decode())
                     version = data.get("version", "")
@@ -567,7 +602,7 @@ class FleetGitOpsUploader(Processor):
             pass
 
         # Default to new format version if query fails (assume modern Fleet deployment)
-        return "4.74.0"
+        return FLEET_NEW_FORMAT_VERSION
 
     @staticmethod
     def _pr_body(
@@ -673,7 +708,7 @@ class FleetGitOpsUploader(Processor):
         }
         req = urllib.request.Request(url, data=body.getvalue(), headers=headers)
         try:
-            with urllib.request.urlopen(req, timeout=900) as resp:
+            with urllib.request.urlopen(req, timeout=FLEET_UPLOAD_TIMEOUT) as resp:
                 resp_body = resp.read()
                 status = resp.getcode()
         except urllib.error.HTTPError as e:
@@ -871,7 +906,7 @@ class FleetGitOpsUploader(Processor):
         data = json.dumps(payload).encode()
         req = urllib.request.Request(api, data=data, headers=headers, method="POST")
         try:
-            with urllib.request.urlopen(req, timeout=60) as resp:
+            with urllib.request.urlopen(req, timeout=GITHUB_API_TIMEOUT) as resp:
                 status = resp.getcode()
                 resp_body = resp.read().decode()
         except urllib.error.HTTPError as e:
@@ -891,7 +926,7 @@ class FleetGitOpsUploader(Processor):
                 issue_api, data=issue_data, headers=headers, method="POST"
             )
             try:
-                urllib.request.urlopen(issue_req, timeout=30)
+                urllib.request.urlopen(issue_req, timeout=GITHUB_LABEL_TIMEOUT)
             except urllib.error.HTTPError:
                 pass
 
@@ -903,7 +938,7 @@ class FleetGitOpsUploader(Processor):
                 reviewers_api, data=reviewers_data, headers=headers, method="POST"
             )
             try:
-                urllib.request.urlopen(reviewers_req, timeout=30)
+                urllib.request.urlopen(reviewers_req, timeout=GITHUB_REVIEWER_TIMEOUT)
             except urllib.error.HTTPError:
                 pass
 
@@ -918,7 +953,7 @@ class FleetGitOpsUploader(Processor):
         url = f"https://api.github.com/search/issues?q={urllib.parse.quote(q)}"
         req = urllib.request.Request(url, headers=headers)
         try:
-            with urllib.request.urlopen(req, timeout=30) as resp:
+            with urllib.request.urlopen(req, timeout=GITHUB_API_TIMEOUT) as resp:
                 data = json.loads(resp.read().decode())
         except urllib.error.HTTPError:
             return ""
