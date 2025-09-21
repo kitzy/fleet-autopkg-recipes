@@ -1,6 +1,6 @@
 # FleetGitOpsUploader AutoPkg Processor
 
-Upload a freshly built installer to Fleet using the Software API, then create or update the corresponding GitOps YAML in your Fleet GitOps repo and open a pull request. This processor is designed for CI use in GitHub Actions and can also be run locally.
+Upload a freshly built installer to Fleet using the Software API, then create or update the corresponding YAML in your Fleet GitOps repo and open a pull request. This processor is designed for CI use in GitHub Actions and can also be run locally.
 
 > **⚠️ Experimental:** This processor uses Fleet's [experimental software management API](https://fleetdm.com/docs/rest-api/rest-api#list-software), which is subject to breaking changes. Fleet may introduce API changes that require corresponding updates to this processor. **Production use is not recommended** due to the experimental nature of the underlying Fleet API.
 
@@ -30,65 +30,7 @@ Upload a freshly built installer to Fleet using the Software API, then create or
 - **Fleet API Access**: Fleet server v4.70.0+ with software management permissions
 - **GitHub Access**: Personal access token with `repo` and `pull-requests` permissions
 
-## Quick Start
-
-### 1. Set Up Environment Variables
-
-Create a shell script with your Fleet and GitHub configuration:
-
-```bash
-# Create fleet-env.sh
-cat > fleet-env.sh << 'EOF'
-#!/bin/bash
-
-# Fleet API Configuration
-export FLEET_API_BASE="https://your-fleet-server.com"
-export FLEET_API_TOKEN="your-fleet-api-token"
-export FLEET_TEAM_ID="1"
-
-# GitHub Configuration  
-export FLEET_GITOPS_REPO_URL="https://github.com/your-org/fleet-gitops"
-export FLEET_GITOPS_GITHUB_TOKEN="your-github-token"
-export FLEET_GITOPS_AUTHOR_EMAIL="autopkg-bot@your-org.com"
-
-# GitOps Configuration
-export FLEET_TEAM_YAML_PATH="teams/workstations.yml"
-
-EOF
-
-# Make executable and source
-chmod +x fleet-env.sh
-source fleet-env.sh
-```
-
-### 2. Test with a Simple Recipe
-
-Run a recipe to ensure everything works:
-
-```bash
-# Source your environment
-source fleet-env.sh
-
-# Run Google Chrome recipe (builds and uploads to Fleet)
-autopkg run Google/GoogleChrome.fleet.recipe.yaml -v
-
-# Check the output for successful upload and PR creation
-```
-
-### 3. Available Recipes
-
-This repository includes recipes for popular software:
-
-- **Browsers**: Google Chrome, Firefox
-- **Communication**: Slack, Zoom, Signal
-- **Development**: Visual Studio Code, GitHub Desktop, iTerm2
-- **Productivity**: Notion, 1Password
-- **Utilities**: Docker Desktop, Caffeine
-
-Run `autopkg list-recipes | grep fleet` to see all available recipes.
-
 ---
-
 
 ## Why YAML?
 
