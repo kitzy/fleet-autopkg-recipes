@@ -3,7 +3,7 @@ Identifier: com.github.kitzy.fleet.VisualStudioCode
 Input:
   NAME: Visual Studio Code
 MinimumVersion: '2.0'
-ParentRecipe: com.github.autopkg.moofit-recipes/VisualStudioCode.pkg.recipe
+ParentRecipe: com.github.amsysuk-recipes.pkg.VisualStudioCode
 Process:
 - Arguments:
     fleet_api_token: '%FLEET_API_TOKEN%'
