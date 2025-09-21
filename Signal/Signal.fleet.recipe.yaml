@@ -1,0 +1,34 @@
+Description: 'Builds Signal.pkg and uploads to Fleet with GitOps workflow'
+Identifier: com.github.kitzy.fleet.Signal
+Input:
+  NAME: Signal
+MinimumVersion: '2.0'
+ParentRecipe: com.github.jaharmi.pkg.Signal
+Process:
+- Arguments:
+    # Parent recipe requirements
+    pkg_path: '%pkg_path%'
+    
+    # Core package info (from parent recipe)
+    software_title: '%NAME%'
+    version: '%version%'
+    
+    # Fleet API configuration
+    fleet_api_base: '%FLEET_API_BASE%'
+    fleet_api_token: '%FLEET_API_TOKEN%'
+    team_id: '%FLEET_TEAM_ID%'
+    
+    # Software configuration
+    self_service: true
+    
+    # Git/GitHub configuration
+    git_repo_url: '%FLEET_GITOPS_REPO_URL%'
+    github_token: '%FLEET_GITOPS_GITHUB_TOKEN%'
+    
+    # GitOps file paths
+    team_yaml_path: '%FLEET_TEAM_YAML_PATH%'
+    
+    # Optional features
+    skip_pkg_upload: false
+    verbose_mode: true
+  Processor: FleetGitOpsUploader
