@@ -57,32 +57,6 @@ export FLEET_GITOPS_AUTHOR_EMAIL="autopkg-bot@myorg.com"
 export FLEET_TEAM_YAML_PATH="teams/workstations.yml"
 ```
 
-**Optional Environment Variables (with defaults):**
-```bash
-# Software configuration (defaults: platform=darwin, automatic_install=false, self_service=true)
-export FLEET_PLATFORM="darwin"
-export FLEET_SOFTWARE_SLUG="custom-slug"  # defaults to software title if not set
-export FLEET_AUTOMATIC_INSTALL="false"
-export FLEET_SELF_SERVICE="true"
-
-# Git configuration (defaults: base_branch=main, author_name=autopkg-bot)
-export FLEET_GIT_BASE_BRANCH="main"
-export FLEET_GIT_AUTHOR_NAME="autopkg-bot"
-
-# GitOps paths (defaults: software_dir=lib/macos/software, suffix=.yml, etc.)
-export FLEET_SOFTWARE_DIR="lib/macos/software"
-export FLEET_PACKAGE_YAML_SUFFIX=".yml"
-export FLEET_TEAM_YAML_PACKAGE_PATH_PREFIX="../lib/macos/software/"
-
-# Optional features (defaults: branch_prefix=autopkg, pr_labels=["autopkg"])
-export FLEET_BRANCH_PREFIX="autopkg"
-export FLEET_PR_LABELS='["autopkg", "software-update"]'
-export PR_REVIEWER="security-team"
-
-# Recipe-specific variables
-export GITHUB_DESKTOP_BUILD="darwin-arm64"  # for GitHub Desktop Apple Silicon builds
-```
-
 **Usage:**
 ```bash
 # Set required variables once
