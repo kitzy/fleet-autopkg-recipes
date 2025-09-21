@@ -32,9 +32,6 @@ import urllib.request
 
 from autopkglib import Processor, ProcessorError
 
-# Chunk size when calculating file hashes
-HASH_CHUNK_SIZE = 8192
-
 
 class FleetGitOpsUploader(Processor):
     """Upload AutoPkg-built installer to Fleet and update GitOps YAML in a PR."""
