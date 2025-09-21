@@ -33,7 +33,7 @@ from autopkglib import Processor, ProcessorError
 
 # Constants for improved readability
 DEFAULT_PLATFORM = "darwin"
-DEFAULT_SOFTWARE_DIR = "lib/macos/software" 
+DEFAULT_SOFTWARE_DIR = "lib/macos/software"
 DEFAULT_PACKAGE_YAML_SUFFIX = ".yml"
 DEFAULT_TEAM_YAML_PREFIX = "../lib/macos/software/"
 DEFAULT_GIT_BASE_BRANCH = "main"
@@ -280,7 +280,9 @@ class FleetGitOpsUploader(Processor):
         author_email = self.env.get("git_author_email", DEFAULT_GIT_AUTHOR_EMAIL)
         team_yaml_path = self.env["team_yaml_path"]
         software_dir = self.env.get("software_dir", DEFAULT_SOFTWARE_DIR)
-        package_yaml_suffix = self.env.get("package_yaml_suffix", DEFAULT_PACKAGE_YAML_SUFFIX)
+        package_yaml_suffix = self.env.get(
+            "package_yaml_suffix", DEFAULT_PACKAGE_YAML_SUFFIX
+        )
         team_yaml_prefix = self.env.get(
             "team_yaml_package_path_prefix", DEFAULT_TEAM_YAML_PREFIX
         )
@@ -533,7 +535,11 @@ class FleetGitOpsUploader(Processor):
                 return True
             elif major == target_major and minor > target_minor:
                 return True
-            elif major == target_major and minor == target_minor and patch >= target_patch:
+            elif (
+                major == target_major
+                and minor == target_minor
+                and patch >= target_patch
+            ):
                 return True
             return False
         except (ValueError, IndexError):
