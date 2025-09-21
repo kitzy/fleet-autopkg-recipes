@@ -3,7 +3,7 @@ Identifier: com.github.kitzy.fleet.Firefox
 Input:
   NAME: Firefox
 MinimumVersion: '2.0'
-ParentRecipe: com.github.autopkg.recipes/Firefox.pkg.recipe
+ParentRecipe: com.github.autopkg.pkg.Firefox_EN
 Process:
 - Arguments:
     fleet_api_token: '%FLEET_API_TOKEN%'

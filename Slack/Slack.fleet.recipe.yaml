@@ -3,7 +3,7 @@ Identifier: com.github.kitzy.fleet.Slack
 Input:
   NAME: Slack
 MinimumVersion: '2.0'
-ParentRecipe: com.github.autopkg.homebysix-recipes/nebula.pkg.recipe
+ParentRecipe: com.github.homebysix.pkg.nebula
 Process:
 - Arguments:
     fleet_api_token: '%FLEET_API_TOKEN%'

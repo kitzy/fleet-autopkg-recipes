@@ -3,7 +3,7 @@ Identifier: com.github.kitzy.fleet.Zoom
 Input:
   NAME: Zoom
 MinimumVersion: '2.0'
-ParentRecipe: com.github.autopkg.homebysix-recipes/Zoom.pkg.recipe
+ParentRecipe: com.github.homebysix.pkg.Zoom
 Process:
 - Arguments:
     fleet_api_token: '%FLEET_API_TOKEN%'

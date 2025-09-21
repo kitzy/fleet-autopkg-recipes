@@ -3,7 +3,7 @@ Identifier: com.github.kitzy.fleet.DockerDesktop
 Input:
   NAME: Docker Desktop
 MinimumVersion: '2.0'
-ParentRecipe: com.github.autopkg.homebysix-recipes/DockerDesktop.pkg.recipe
+ParentRecipe: com.github.homebysix.pkg.DockerDesktop
 Process:
 - Arguments:
     fleet_api_token: '%FLEET_API_TOKEN%'

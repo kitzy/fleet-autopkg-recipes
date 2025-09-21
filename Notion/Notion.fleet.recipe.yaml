@@ -3,7 +3,7 @@ Identifier: com.github.kitzy.fleet.Notion
 Input:
   NAME: Notion
 MinimumVersion: '2.0'
-ParentRecipe: com.github.autopkg.swy-recipes/Notion.pkg.recipe
+ParentRecipe: com.github.swy.pkg.Notion
 Process:
 - Arguments:
     fleet_api_token: '%FLEET_API_TOKEN%'
