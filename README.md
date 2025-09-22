@@ -300,7 +300,7 @@ Process:
 
 - When a GitHub token is provided, the processor rewrites the Git repository URL with the token so that cloning and pushing use authenticated HTTPS URLs without prompts. `GIT_TERMINAL_PROMPT` is set to `0` to prevent interactive authentication.
 - Consider scoping the GitHub token to the target repo only.
-- Rotate the Fleet API token periodically.
+- Rotate API tokens periodically.
 
 ---
 
