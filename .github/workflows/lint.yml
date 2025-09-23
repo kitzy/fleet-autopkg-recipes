@@ -31,19 +31,19 @@ jobs:
     - name: Check Python formatting (black)
       run: |
         echo "Checking black formatting..."
-        black --check --diff FleetGitOpsUploader/FleetGitOpsUploader.py
+        black --check --diff FleetImporter/FleetImporter.py
         echo "✅ Black formatting passed"
         
     - name: Check import sorting (isort)
       run: |
         echo "Checking import order..."
-        isort --check-only --diff FleetGitOpsUploader/FleetGitOpsUploader.py
+        isort --check-only --diff FleetImporter/FleetImporter.py
         echo "✅ Import sorting passed"
         
     - name: Check flake8 with bugbear
       run: |
         echo "Running flake8 with bugbear..."
-        flake8 FleetGitOpsUploader/FleetGitOpsUploader.py
+        flake8 FleetImporter/FleetImporter.py
         echo "✅ Flake8 + bugbear passed"
         
     - name: Validate YAML formatting

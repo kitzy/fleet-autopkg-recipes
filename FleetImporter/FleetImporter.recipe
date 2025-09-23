@@ -3,9 +3,9 @@
 <plist version="1.0">
 <dict>
 	<key>Description</key>
-	<string>This is a stub recipe that can be used as a reference when referring to the FleetGitOpsUploader shared processor.</string>
+	<string>This is a stub recipe that can be used as a reference when referring to the FleetImporter shared processor.</string>
 	<key>Identifier</key>
-	<string>com.github.kitzy.FleetGitOpsUploader</string>
+	<string>com.github.kitzy.FleetImporter</string>
 	<key>Input</key>
 	<dict/>
 	<key>MinimumVersion</key>

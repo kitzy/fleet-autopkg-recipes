@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# FleetGitOpsUploader AutoPkg Processor
+# FleetImporter AutoPkg Processor
 #
 # Uploads a package to Fleet and updates a Fleet GitOps repo with software YAML,
 # commits on a new branch, and opens a PR.
@@ -54,7 +54,7 @@ GITHUB_LABEL_TIMEOUT = 30
 GITHUB_REVIEWER_TIMEOUT = 30
 
 
-class FleetGitOpsUploader(Processor):
+class FleetImporter(Processor):
     """Upload AutoPkg-built installer to Fleet and update GitOps YAML in a PR."""
 
     description = __doc__
@@ -624,7 +624,7 @@ class FleetGitOpsUploader(Processor):
 
         Examples
         --------
-        >>> FleetGitOpsUploader._pr_body("Firefox", "1.2.3", "Mozilla/firefox", 42, 99)
+        >>> FleetImporter._pr_body("Firefox", "1.2.3", "Mozilla/firefox", 42, 99)
         '### Firefox 1.2.3\n\n- Fleet title ID: `42`\n- Fleet installer ID: `99`\n- Software slug: `Mozilla/firefox`\n- [Changelog](https://github.com/Mozilla/firefox/releases/tag/1.2.3)'
         """
 
