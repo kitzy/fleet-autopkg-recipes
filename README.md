@@ -1,4 +1,4 @@
-# FleetGitOpsUploader AutoPkg Processor
+# FleetImporter AutoPkg Processor
 
 Upload a freshly built installer to Fleet using the Software API, then create or update the corresponding YAML in your Fleet GitOps repo and open a pull request. This processor is designed for CI use in GitHub Actions and can also be run locally.
 
@@ -24,7 +24,7 @@ Upload a freshly built installer to Fleet using the Software API, then create or
 ## Requirements
 
 - **macOS**: Required for AutoPkg execution
-- **Python 3.9+**: For the FleetGitOpsUploader processor
+- **Python 3.9+**: For the FleetImporter processor
 - **AutoPkg 2.7+**: For recipe processing
 - **Git**: For GitOps repository operations
 - **Fleet API Access**: Fleet server v4.70.0+ with software management permissions
@@ -253,7 +253,7 @@ Process:
     # Optional features
     skip_pkg_upload: false
     verbose_mode: true
-  Processor: FleetGitOpsUploader
+  Processor: FleetImporter
 ```
 
 ---

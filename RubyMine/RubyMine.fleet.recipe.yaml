@@ -20,4 +20,4 @@ Process:
     git_repo_url: "%FLEET_GITOPS_REPO_URL%"
     github_token: "%FLEET_GITOPS_GITHUB_TOKEN%"
     team_yaml_path: "%FLEET_TEAM_YAML_PATH%"
-  Processor: com.github.kitzy.FleetGitOpsUploader/FleetGitOpsUploader
+  Processor: com.github.kitzy.FleetImporter/FleetImporter
